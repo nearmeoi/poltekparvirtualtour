@@ -30,6 +30,14 @@ export const CONFIG = {
         panoramaGroupY: 0,
     },
 
+    // Narration — subtitle panel positioning and sizing
+    narration: {
+        subtitleDistance: 2.0,   // meters in front of camera
+        subtitleY: -0.5,         // meters below camera.position.y
+        subtitleWidth: 1.8,      // panel width in world units
+        subtitleHeight: 0.25,    // panel height in world units
+    },
+
     // Menu Settings
     menu: {
         radius: 2.5,
