@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>WebVR - A-Frame Prototype</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <style>
+        /* Custom UI overlay example */
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            color: white;
+            font-family: sans-serif;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="ui-layer">
+        <h1>A-Frame Prototype</h1>
+        <p>Testing Gyroscope & Cardboard Support</p>
+    </div>
+
+    <a-scene loading-screen="dotsColor: white; backgroundColor: black">
+        <a-assets>
+            <!-- Preload the lobby image from our assets -->
+            <img id="lobby-pano" src="assets/Museum Kota Makassar/lobby_C12D6770.jpg" crossorigin="anonymous">
+        </a-assets>
+
+        <!-- 360 Panorama -->
+        <a-sky src="#lobby-pano" rotation="0 -90 0"></a-sky>
+
+        <!-- Camera Rig -->
+        <a-entity id="rig" position="0 1.6 0">
+            <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true; mouseEnabled: true">
+                <!-- Cursor for gaze interaction -->
+                <a-cursor id="cursor" color="white" fuse="true" fuse-timeout="1500" raycaster="objects: .clickable"
+                    scale="1 1 1"></a-cursor>
+            </a-entity>
+        </a-entity>
+
+        <!-- Example Hotspot -->
+        <a-entity class="clickable" geometry="primitive: plane; height: 1; width: 1"
+            material="color: red; opacity: 0.7; side: double" position="-5 1 -5" rotation="0 45 0"
+            event-set__mouseenter="_event: mouseenter; color: #FF0000"
+            event-set__mouseleave="_event: mouseleave; color: #AA0000">
+            <a-text value="Hotspot Test" align="center" position="0 0 0.1"></a-text>
+        </a-entity>
+
+    </a-scene>
+</body>
+
+</html>

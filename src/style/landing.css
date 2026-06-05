@@ -1,0 +1,115 @@
+/* ==================== LANDING SCREEN ==================== */
+
+#landing-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff; /* Material White */
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #202124; /* Google Dark Grey */
+    text-align: center;
+    font-family: 'Roboto', 'Inter', sans-serif;
+    transition: opacity 1.0s cubic-bezier(0.4, 0.0, 0.2, 1); /* Material Ease */
+}
+
+.landing-bg {
+    display: none; /* No dark overlay needed */
+}
+
+.landing-content {
+    padding: 40px;
+    max-width: 600px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+}
+
+.landing-title {
+    margin: 0;
+    font-size: 3rem;
+    font-weight: 500; /* Medium weight */
+    letter-spacing: -0.02em;
+    color: #202124;
+    line-height: 1.2;
+}
+
+.landing-subtitle {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #5f6368; /* Material Secondary Text */
+    line-height: 1.5;
+    max-width: 480px;
+}
+
+#enter-vr-btn {
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: white;
+    background: #1a73e8; /* Google Blue */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    text-transform: none; /* Sentence case is friendlier */
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15); /* Material Elevation 1 */
+}
+
+#enter-vr-btn:hover {
+    background: #1765cc; /* Darker blue on hover */
+    box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15); /* Material Elevation 2 */
+}
+
+#enter-vr-btn:active {
+    background: #185abc;
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+}
+
+.landing-footer {
+    margin-top: 40px;
+    font-size: 0.85rem;
+    color: #9aa0a6; /* Tertiary Text */
+    font-weight: 400;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .landing-content {
+        padding: 24px;
+        gap: 24px;
+    }
+
+    .landing-title {
+        font-size: 2.5rem;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    .landing-subtitle {
+        font-size: 1rem;
+        margin-bottom: 24px;
+    }
+
+    #enter-vr-btn {
+        padding: 14px 24px;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 320px;
+        box-sizing: border-box;
+    }
+
+    .landing-footer {
+        margin-top: 24px;
+        font-size: 0.75rem;
+    }
+}

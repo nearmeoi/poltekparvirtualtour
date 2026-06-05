@@ -1,0 +1,33 @@
+/* ==================== iOS FULLSCREEN SCROLL TRICK HELPERS ==================== */
+/*
+ * Must apply to BOTH html and body to override overflow:hidden.
+ * These classes are toggled by iOSFullscreenHelper.js when
+ * attempting to hide the iOS Safari address bar.
+ */
+
+html.ios-scroll-active,
+body.ios-scroll-active {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    min-height: 100vh;
+    position: relative !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Overlay must be sticky (not fixed/absolute) during scroll mode.
+ * Sticky = stays visually pinned at top, but page CAN scroll,
+ * which triggers iOS Safari address bar hiding.
+ */
+body.ios-scroll-active #vr-instruction-overlay {
+    position: sticky !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    z-index: 99999 !important;
+}

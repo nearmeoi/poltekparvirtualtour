@@ -1,0 +1,97 @@
+/* ==================== ONBOARDING SCREEN (3DVISTA STYLE) ==================== */
+
+#onboarding-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5000;
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+}
+
+.onboarding-window {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.onboarding-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.onboarding-icon {
+    width: 80px;
+    height: 80px;
+}
+
+.onboarding-window h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #444;
+}
+
+.onboarding-desc {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.onboarding-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.onboarding-btn.default,
+.onboarding-btn.v2 {
+    background: #00AEEF;
+    color: white;
+}
+
+.onboarding-btn:hover {
+    filter: brightness(1.1);
+}
+
+.onboarding-btn:active {
+    transform: scale(0.98);
+}
+
+.onboarding-divider {
+    margin: 30px 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+.onboarding-footer-opt {
+    margin-top: 25px;
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.onboarding-footer-opt label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
