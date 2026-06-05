@@ -48,6 +48,7 @@ export class PanoramaViewer {
         this.group.add(this.controlDock);
 
         this.createBackButton();
+        this.createNarrationButtons();
         this.audioControls = new AudioControls(this.controlDock);
         this.audioControls.setVisible(false); // Hide legacy buttons (we use Unified Dock now)
         this.createLoadingIndicator();
@@ -134,6 +135,52 @@ export class PanoramaViewer {
         this.controlDock.add(this.backBtn);
     }
 
+    createNarrationButtons() {
+        const makeBtn = (label) => {
+            const canvas = CanvasUI.createButtonTexture(label, {
+                width: 200, height: 180, radius: 40, fontSize: 36
+            });
+            const texture = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.MeshBasicMaterial({
+                map: texture, transparent: true, side: THREE.DoubleSide
+            });
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.18), mat);
+            mesh.userData.isInteractable = true;
+            mesh.userData.originalScale = new THREE.Vector3(1, 1, 1);
+            mesh.userData.targetScale   = new THREE.Vector3(1, 1, 1);
+            mesh.userData.animProgress  = 1;
+            mesh.onHoverIn  = () => mesh.userData.targetScale.set(1.1, 1.1, 1.1);
+            mesh.onHoverOut = () => mesh.userData.targetScale.copy(mesh.userData.originalScale);
+            return { mesh, canvas };
+        };
+
+        const y = CONFIG.layout.backButtonOffsetY;
+
+        // Pause / Resume button
+        const { mesh: pauseMesh, canvas: pauseCanvas } = makeBtn('PAUSE');
+        this.pauseBtn = pauseMesh;
+        this._pauseBtnCanvas = pauseCanvas;
+        this.pauseBtn.position.set(0.5, y, -1.6);
+        this.pauseBtn.lookAt(0, CONFIG.layout.menuY, 0);
+        this.pauseBtn.onClick = () => { this._narrationController?.pause(); };
+        this.pauseBtn.visible = false;
+        this.controlDock.add(this.pauseBtn);
+
+        // Skip button
+        const { mesh: skipMesh } = makeBtn('SKIP');
+        this.skipBtn = skipMesh;
+        this.skipBtn.position.set(0.9, y, -1.6);
+        this.skipBtn.lookAt(0, CONFIG.layout.menuY, 0);
+        this.skipBtn.onClick = () => { this._narrationController?.skip(); };
+        this.skipBtn.visible = false;
+        this.controlDock.add(this.skipBtn);
+
+        this._narrationPaused = false;
+    }
+
+    setNarrationController(controller) {
+        this._narrationController = controller;
+    }
 
     setAudioButtonsPosition(mode, subLocationCount = 0, lastItemTheta = undefined) {
         // Delegate to AudioControls component
@@ -163,37 +210,7 @@ export class PanoramaViewer {
 
         this.currentLocation = location;
 
-        // Stop any playing audio
-        if (this.currentAudio) {
-            this.currentAudio.pause();
-            this.currentAudio = null;
-        }
-
-        // Play audio if available (global per location)
-        if (location.audio) {
-            this.currentAudio = new Audio(location.audio);
-            this.currentAudio.loop = false; // No loop, play once
-            this.currentAudio.volume = 0.5;
-
-            // Bind audio to AudioControls
-            this.audioControls.setAudio(this.currentAudio);
-
-            // Handle audio ended
-            this.currentAudio.addEventListener('ended', () => {
-                this.audioControls.setState(false, this.audioControls.isMuted);
-            });
-
-            // Auto-start
-            this.currentAudio.play().then(() => {
-                this.audioControls.setState(true, this.audioControls.isMuted);
-            }).catch(err => {
-                console.log('Audio autoplay blocked:', err);
-                this.audioControls.setState(false, this.audioControls.isMuted);
-            });
-        } else {
-            this.audioControls.setAudio(null);
-            this.audioControls.setState(false, false);
-        }
+        // Audio is handled by NarrationController via scene:loaded event
 
         // Check for multi-scene data
         if (location.scenes && location.scenes.length > 0) {
@@ -204,6 +221,14 @@ export class PanoramaViewer {
             // Load with depth map if available
             this.loadTextureWithDepth(location.panorama, location.depthMap);
             this.clearHotspots();
+
+            // Emit scene:loaded so NarrationController picks up audio + subtitles
+            if (this.bus) {
+                this.bus.emit('scene:loaded', {
+                    sceneId: location.id ?? location.panorama,
+                    sceneData: location,
+                });
+            }
         }
 
         this.group.visible = true;
@@ -1064,6 +1089,31 @@ export class PanoramaViewer {
 
         // Animate all buttons
         animateObject(this.backBtn);
+        animateObject(this.pauseBtn);
+        animateObject(this.skipBtn);
+
+        // Show/hide narration buttons and sync pause label
+        if (this._narrationController) {
+            const active = this._narrationController.isActive();
+            if (this.pauseBtn) this.pauseBtn.visible = active;
+            if (this.skipBtn)  this.skipBtn.visible  = active;
+
+            if (active) {
+                const paused = this._narrationController.isPaused();
+                if (paused !== this._narrationPaused) {
+                    this._narrationPaused = paused;
+                    const label = paused ? 'PLAY' : 'PAUSE';
+                    const newCanvas = CanvasUI.createButtonTexture(label, {
+                        width: 200, height: 180, radius: 40, fontSize: 36
+                    });
+                    const oldMap = this.pauseBtn.material.map;
+                    this.pauseBtn.material.map = new THREE.CanvasTexture(newCanvas);
+                    this.pauseBtn.material.needsUpdate = true;
+                    if (oldMap) oldMap.dispose();
+                    this._pauseBtnCanvas = newCanvas;
+                }
+            }
+        }
 
         // Animate hotspots
         if (this.hotspotManager) {
