@@ -8,7 +8,7 @@ export class NarrationController {
         this._subtitles = [];
         this._subtitlePanel = new SubtitlePanel3D(camera, scene);
 
-        this._bus.on('scene:loaded', ({ sceneData }) => this._loadScene(sceneData));
+        this._unsubscribe = this._bus.on('scene:loaded', ({ sceneData }) => this._loadScene(sceneData));
     }
 
     _loadScene(sceneData) {
@@ -76,6 +76,7 @@ export class NarrationController {
     }
 
     dispose() {
+        this._unsubscribe?.();
         this._disposeAudio();
         this._subtitlePanel.dispose();
     }
