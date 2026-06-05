@@ -52,6 +52,10 @@ export class SubtitlePanel3D {
         const ctx = this.canvas.getContext('2d');
         ctx.clearRect(0, 0, cw, ch);
 
+        // Truncate very long text to prevent silent overflow past 2 lines
+        const MAX_CHARS = 120;
+        if (text.length > MAX_CHARS) text = text.slice(0, MAX_CHARS - 1) + '…';
+
         CanvasUI.roundRect(ctx, 8, 8, cw - 16, ch - 16, 20);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.70)';
         ctx.fill();
@@ -91,6 +95,7 @@ export class SubtitlePanel3D {
     }
 
     show(text) {
+        if (!text) { this.hide(); return; }
         if (text === this._currentText && this.group.visible) return;
         this._currentText = text;
         this._drawText(text);
