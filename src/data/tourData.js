@@ -15,7 +15,12 @@ export const TOUR_DATA = [
     duration: 200,
     initialHeading: 0,
     autoRotate: false,
-    hotspots: []
+    hotspots: [],
+    subtitles: [
+      { start: 0,    end: 6,    text: 'Selamat datang di Museum Kota Makassar.' },
+      { start: 6.5,  end: 14,   text: 'Museum ini menyimpan sejarah panjang Kota Makassar.' },
+      { start: 14.5, end: 22,   text: 'Mari kita mulai perjalanan virtual tour ini bersama.' },
+    ],
   },
   {
     id: 1,
@@ -28,7 +33,8 @@ export const TOUR_DATA = [
     duration: 200,
     initialHeading: 0,
     autoRotate: false,
-    hotspots: []
+    hotspots: [],
+    subtitles: [],
   },
   {
     id: 2,
@@ -41,7 +47,8 @@ export const TOUR_DATA = [
     duration: 200,
     initialHeading: 0,
     autoRotate: false,
-    hotspots: []
+    hotspots: [],
+    subtitles: [],
   }
 ];
 
