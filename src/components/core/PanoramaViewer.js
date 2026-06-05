@@ -23,7 +23,7 @@ export class PanoramaViewer {
         this.currentPath = null;
         this.currentSceneId = null;
 
-        this.currentAudio = null;
+        // Audio managed by NarrationController via scene:loaded event
         this.isAdminMode = false;
 
         // 1. Sphere Pano (radius must be < camera far clip)
@@ -985,11 +985,6 @@ export class PanoramaViewer {
     }
 
     hide() {
-        // Stop audio when hiding
-        if (this.currentAudio) {
-            this.currentAudio.pause();
-            this.currentAudio = null;
-        }
         this.group.visible = false;
     }
 
@@ -1112,6 +1107,8 @@ export class PanoramaViewer {
                     if (oldMap) oldMap.dispose();
                     this._pauseBtnCanvas = newCanvas;
                 }
+            } else {
+                this._narrationPaused = false;
             }
         }
 
@@ -1171,6 +1168,16 @@ export class PanoramaViewer {
             this.backBtn.geometry.dispose();
             if (this.backBtn.material.map) this.backBtn.material.map.dispose();
             this.backBtn.material.dispose();
+        }
+        if (this.pauseBtn) {
+            if (this.pauseBtn.material.map) this.pauseBtn.material.map.dispose();
+            this.pauseBtn.material.dispose();
+            this.pauseBtn.geometry.dispose();
+        }
+        if (this.skipBtn) {
+            if (this.skipBtn.material.map) this.skipBtn.material.map.dispose();
+            this.skipBtn.material.dispose();
+            this.skipBtn.geometry.dispose();
         }
         // Removed Play/Mute btns logic earlier so no need to dispose them here if they aren't created.
         // But for safety:
