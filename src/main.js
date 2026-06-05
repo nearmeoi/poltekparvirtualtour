@@ -41,6 +41,9 @@ import { InputHandler }    from './components/core/InputHandler.js';
 // Menu
 import { OrbitalMenu } from './components/menu/OrbitalMenu.js';
 
+// Narration
+import { NarrationController } from './components/narration/NarrationController.js';
+
 // VR Components
 import { VROverlay }           from './components/vr/VROverlay.js';
 import { CardboardModeManager } from './components/vr/CardboardModeManager.js';
@@ -466,6 +469,10 @@ class App {
             this.panoramaViewer.backBtn.visible = true;
         });
         this.orbitalMenu.hide(); // Hidden until user starts the experience
+
+        // Narration controller — audio + subtitle system
+        this.narrationController = new NarrationController(this.bus, this.camera, this.scene);
+        this.panoramaViewer.setNarrationController(this.narrationController);
     }
 
     // ======================== ADMIN PANEL ========================
@@ -504,9 +511,7 @@ class App {
             this.panoramaViewer.basicMaterial.map = null;
             this.panoramaViewer.basicMaterial.needsUpdate = true;
         }
-        if (this.panoramaViewer.currentAudio) {
-            this.panoramaViewer.currentAudio.pause();
-        }
+        this.narrationController?.skip();
 
         this.currentState = 'menu';
         this.orbitalMenu.show();
@@ -550,6 +555,7 @@ class App {
         }
 
         // Per-frame component updates
+        this.narrationController?.update(delta);
         this.panoramaViewer?.update(delta);
         this.infoPanel3D?.update(delta);
         if (this.orbitalMenu?.group.visible) {
@@ -568,6 +574,7 @@ class App {
 
     dispose() {
         this.inputHandler?.dispose();
+        this.narrationController?.dispose();
         this.panoramaViewer?.dispose?.();
         this.orbitalMenu?.dispose?.();
         this.gazeController?.dispose?.();
