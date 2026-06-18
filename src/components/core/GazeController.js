@@ -117,6 +117,13 @@ export class GazeController {
 
         if (this.triggerLockTime > 0) {
             this.triggerLockTime -= delta;
+            if (this.triggerLockTime <= 0) {
+                // Lock just lifted. Whatever is centred under the reticle right now must
+                // NOT auto-trigger — the user has to look away / onto another item first.
+                // Without this, opening the orbital menu (which centres an item on the
+                // reticle) instantly gaze-selects that item and the menu vanishes.
+                this._lockJustEnded = true;
+            }
             this.clearHover();
             // Reticle position is already updated above
             return;
@@ -162,6 +169,17 @@ export class GazeController {
             }
 
             if (target) {
+                // Re-entry guard: if a gaze lock just lifted, the object centred at that
+                // instant is suppressed until the reticle leaves it once. The user must
+                // make a deliberate selection rather than auto-triggering whatever spawned
+                // under the reticle.
+                if (this._lockJustEnded) {
+                    this._lockJustEnded = false;
+                    this._suppressObject = target;
+                }
+                const suppressed = this._suppressObject === target;
+                if (!suppressed) this._suppressObject = null;
+
                 if (this.hoveredObject !== target) {
                     console.log('[GAZE] Found interactable:', target.userData?.label || target.name || 'unlabeled');
                     if (this.hoveredObject) this.onHoverOut(this.hoveredObject);
@@ -174,26 +192,33 @@ export class GazeController {
                 }
 
                 if (this.interactionMode === 'gaze') {
-                    // Increment timer
-                    this.hoverTime += delta;
-
-                    // Calculate progress based on DYNAMIC time
-                    const progress = Math.min(this.hoverTime / this.currentActivationTime, 1);
-                    this.progressMesh.scale.set(progress, progress, 1);
-
-                    if (this.hoverTime >= this.currentActivationTime) {
-                        this.trigger(target, firstIntersect);
-                        this.hoverTime = 0; // Reset
+                    if (suppressed) {
+                        // Hovered but waiting for re-entry — keep the ring empty, no dwell.
                         this.progressMesh.scale.set(0, 0, 1);
+                    } else {
+                        // Increment timer
+                        this.hoverTime += delta;
+
+                        // Calculate progress based on DYNAMIC time
+                        const progress = Math.min(this.hoverTime / this.currentActivationTime, 1);
+                        this.progressMesh.scale.set(progress, progress, 1);
+
+                        if (this.hoverTime >= this.currentActivationTime) {
+                            this.trigger(target, firstIntersect);
+                            this.hoverTime = 0; // Reset
+                            this.progressMesh.scale.set(0, 0, 1);
+                        }
                     }
                 } else {
                     // Button mode: Just show the reticle ring at 100% or slightly larger but don't fill
                     this.progressMesh.scale.set(1, 1, 1);
                 }
             } else {
+                this._lockJustEnded = false;
                 this.clearHover();
             }
         } else {
+            this._lockJustEnded = false;
             this.clearHover();
         }
     }
@@ -204,6 +229,9 @@ export class GazeController {
             this.hoveredObject = null;
         }
         this.hoverTime = 0;
+        // Reticle left everything → re-arm any suppressed object so it can be
+        // deliberately re-selected when the user looks back at it.
+        this._suppressObject = null;
         this.progressMesh.scale.set(0, 0, 1);
     }
 
