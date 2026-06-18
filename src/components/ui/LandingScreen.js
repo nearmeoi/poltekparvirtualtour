@@ -18,30 +18,31 @@ export class LandingScreen {
         const landingScreen = document.getElementById('landing-screen');
         const btnStart = document.getElementById('enter-vr-btn');
 
-        const enterTour = async () => {
-            // Request fullscreen
-            await FullscreenHelper.request();
-
-            // Lock landscape
-            await FullscreenHelper.lockLandscape();
+        const enterTour = () => {
+            // Best-effort device setup. These run inside the click gesture (so iOS audio/gyro
+            // permission prompts still fire), but are NEVER awaited on the critical path:
+            // requestFullscreen() can hang indefinitely in some browsers/embeds without ever
+            // resolving or rejecting, which previously left the user stuck on the landing
+            // screen with no orbital menu. The menu must always appear after the click.
+            FullscreenHelper.request()
+                .then(() => FullscreenHelper.lockLandscape())
+                .catch(() => {});
 
             // Resume audio context (required for autoplay policies)
-            await AudioContextManager.resume();
+            AudioContextManager.resume().catch(() => {});
 
-            // Enable Gyroscope Controls (handles iOS 13+ permission from within user gesture)
-            try {
-                if (this.app.gyroscopeControls) {
-                    const gyroEnabled = await this.app.gyroscopeControls.enable();
-                    if (gyroEnabled) {
-                        this.app.isGyroEnabled = true;
+            // Enable Gyroscope Controls (iOS 13+ permission must be requested from within the
+            // user gesture — fire it now, but don't block the menu on the result).
+            if (this.app.gyroscopeControls) {
+                this.app.gyroscopeControls.enable()
+                    .then((gyroEnabled) => {
+                        this.app.isGyroEnabled = !!gyroEnabled;
                         // OrbitControls stays enabled as touch-drag fallback when gyro has no data
-                        console.log('Gyroscope enabled for Magic Window mode');
-                    } else {
-                        console.log('No gyroscope available, using OrbitControls');
-                    }
-                }
-            } catch (e) {
-                console.warn('Gyroscope enable failed:', e);
+                        console.log(gyroEnabled
+                            ? 'Gyroscope enabled for Magic Window mode'
+                            : 'No gyroscope available, using OrbitControls');
+                    })
+                    .catch((e) => console.warn('Gyroscope enable failed:', e));
             }
 
             // Fade out landing screen
