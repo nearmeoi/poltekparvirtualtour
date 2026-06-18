@@ -16,11 +16,8 @@ export const TOUR_DATA = [
     initialHeading: 0,
     autoRotate: false,
     hotspots: [],
-    subtitles: [
-      { start: 0,    end: 6,    text: 'Selamat datang di Museum Kota Makassar.' },
-      { start: 6.5,  end: 14,   text: 'Museum ini menyimpan sejarah panjang Kota Makassar.' },
-      { start: 14.5, end: 22,   text: 'Mari kita mulai perjalanan virtual tour ini bersama.' },
-    ],
+    // Subtitle cues live in src/data/captions/museum-kota.json (loaded lazily).
+    captions: 'museum-kota',
   },
   {
     id: 1,
@@ -34,7 +31,8 @@ export const TOUR_DATA = [
     initialHeading: 0,
     autoRotate: false,
     hotspots: [],
-    subtitles: [],
+    // Subtitle cues live in src/data/captions/lagaligo.json (loaded lazily).
+    captions: 'lagaligo',
   },
   {
     id: 2,
@@ -48,7 +46,8 @@ export const TOUR_DATA = [
     initialHeading: 0,
     autoRotate: false,
     hotspots: [],
-    subtitles: [],
+    // Subtitle cues live in src/data/captions/panlos.json (loaded lazily).
+    captions: 'panlos',
   }
 ];
 

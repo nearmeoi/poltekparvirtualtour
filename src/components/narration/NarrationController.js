@@ -1,4 +1,5 @@
 import { AudioContextManager } from '../../utils/AudioContextManager.js';
+import { DataService } from '../../data/DataService.js';
 import { SubtitlePanel3D } from './SubtitlePanel3D.js';
 
 export class NarrationController {
@@ -6,6 +7,9 @@ export class NarrationController {
         this._bus = bus;
         this._audio = null;
         this._subtitles = [];
+        // Bumped on every load/dispose so async caption fetches that resolve late
+        // (after the user already moved to another scene) can be discarded.
+        this._loadToken = 0;
         this._subtitlePanel = new SubtitlePanel3D(camera, scene);
 
         this._unsubscribe = this._bus.on('scene:loaded', ({ sceneData }) => this._loadScene(sceneData));
@@ -15,15 +19,26 @@ export class NarrationController {
         this._disposeAudio();
         if (!sceneData?.audio) return;
 
-        this._subtitles = sceneData.subtitles || [];
+        const token = ++this._loadToken;
+        this._subtitles = [];
         this._audio = new Audio(sceneData.audio);
         this._audio.volume = 0.8;
 
         AudioContextManager.resume().then(() => {
+            if (this._loadToken !== token) return;
             this._audio?.play().catch(err => {
                 console.warn('[NarrationController] Autoplay blocked:', err);
             });
         });
+
+        // Captions: prefer external file (captions id), fall back to inline array.
+        if (Array.isArray(sceneData.subtitles)) {
+            this._subtitles = sceneData.subtitles;
+        } else if (sceneData.captions) {
+            DataService.getCaptions(sceneData.captions).then(cues => {
+                if (this._loadToken === token) this._subtitles = cues || [];
+            });
+        }
     }
 
     update(delta) {
@@ -66,6 +81,8 @@ export class NarrationController {
     }
 
     _disposeAudio() {
+        // Invalidate any in-flight caption fetch so it can't repopulate subtitles.
+        this._loadToken++;
         if (this._audio) {
             this._audio.pause();
             this._audio.src = '';
