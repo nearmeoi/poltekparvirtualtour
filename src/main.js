@@ -580,6 +580,9 @@ class App {
     // ======================== CLEANUP ========================
 
     dispose() {
+        // Stop the render loop first so render() can't fire on half-torn-down state.
+        this.renderer?.setAnimationLoop(null);
+
         this.inputHandler?.dispose();
         this.narrationController?.dispose();
         this.panoramaViewer?.dispose?.();
@@ -590,7 +593,19 @@ class App {
         this.debugInfo?.remove();
         this.vrButton?.remove();
         this.container?.remove();
+        this.renderer?.dispose();
     }
 }
 
-new App();
+// Single-instance guard + HMR teardown. Without this, a dev hot-reload could
+// leave a previous App's render loop, narration audio, and 3D panels alive and
+// stack a new App on top — which surfaced as duplicated subtitles/controls.
+if (window.__vtApp) window.__vtApp.dispose();
+window.__vtApp = new App();
+
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+        window.__vtApp?.dispose();
+        window.__vtApp = null;
+    });
+}
