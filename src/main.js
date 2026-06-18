@@ -127,13 +127,14 @@ class App {
         document.body.appendChild(this.debugInfo);
 
         this.renderer = new THREE.WebGLRenderer({
-            antialias: true,
-            preserveDrawingBuffer: true,
+            antialias: CONFIG.renderer.antialias,
+            preserveDrawingBuffer: CONFIG.renderer.preserveDrawingBuffer,
             // Force WebGL1 so the polyfill WebXR (canvas.getContext('webgl'))
             // doesn't conflict with a webgl2 context
             forceWebGL1: true
         });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        // Clamp DPR so high-density phones don't render far more pixels than needed.
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, CONFIG.renderer.maxPixelRatio));
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.container.appendChild(this.renderer.domElement);
     }

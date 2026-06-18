@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CONFIG } from '../../config.js';
 
 /**
  * StereoEffect - Creates a stereoscopic (side-by-side) rendering effect
@@ -133,7 +134,9 @@ export class StereoEffect {
 
     enable() {
         this.enabled = true;
-        const dpr = window.devicePixelRatio || 1;
+        // Clamp DPR: the stereo path renders the scene twice plus two post passes,
+        // so unclamped device DPR (often 3 on budget phones) tanks fill-rate.
+        const dpr = Math.min(window.devicePixelRatio || 1, CONFIG.vr.stereoMaxPixelRatio);
         this.renderer.setPixelRatio(dpr);
 
         // Save original clear color
@@ -166,7 +169,7 @@ export class StereoEffect {
             type: THREE.UnsignedByteType,
             depthBuffer: true,
             stencilBuffer: false,
-            samples: 4,
+            samples: CONFIG.vr.stereoMSAASamples,
             colorSpace: THREE.SRGBColorSpace // Ensure correct color vibrancy
         });
 
@@ -177,7 +180,7 @@ export class StereoEffect {
             type: THREE.UnsignedByteType,
             depthBuffer: true,
             stencilBuffer: false,
-            samples: 4,
+            samples: CONFIG.vr.stereoMSAASamples,
             colorSpace: THREE.SRGBColorSpace // Ensure correct color vibrancy
         });
 
@@ -196,7 +199,7 @@ export class StereoEffect {
 
     disable() {
         this.enabled = false;
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, CONFIG.renderer.maxPixelRatio));
 
         // Dispose render targets
         if (this.renderTargetL) {

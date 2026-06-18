@@ -259,6 +259,34 @@ export class PanoramaViewer {
         }
     }
 
+    /**
+     * Insert a texture into the cache as most-recently-used, evicting the
+     * least-recently-used entries once over CONFIG.panorama.textureCacheLimit.
+     * Never disposes the texture currently displayed (this.currentPath).
+     */
+    _cacheTexture(path, texture) {
+        if (!this.textureCache) this.textureCache = new Map();
+        // Re-insert so this path is most-recently-used (Map keeps insertion order).
+        this.textureCache.delete(path);
+        this.textureCache.set(path, texture);
+
+        const limit = CONFIG.panorama.textureCacheLimit || 8;
+        while (this.textureCache.size > limit) {
+            const oldestKey = this.textureCache.keys().next().value;
+            if (oldestKey === this.currentPath) {
+                // In use — promote to MRU and stop rather than dispose a live texture.
+                const live = this.textureCache.get(oldestKey);
+                this.textureCache.delete(oldestKey);
+                this.textureCache.set(oldestKey, live);
+                break;
+            }
+            const oldTex = this.textureCache.get(oldestKey);
+            this.textureCache.delete(oldestKey);
+            if (oldTex && oldTex.dispose) oldTex.dispose();
+            console.log('Evicted texture from cache (LRU):', oldestKey);
+        }
+    }
+
     loadTexture(path) {
         this.currentPath = path; // Track Path
 
@@ -275,6 +303,9 @@ export class PanoramaViewer {
         if (this.textureCache && this.textureCache.has(path)) {
             console.log('Using cached texture:', path);
             const cachedTexture = this.textureCache.get(path);
+            // LRU touch: re-insert so this path becomes the most-recently-used.
+            this.textureCache.delete(path);
+            this.textureCache.set(path, cachedTexture);
             this.basicMaterial.map = cachedTexture;
             this.basicMaterial.needsUpdate = true;
             // Ensure sphere uses basic material (not parallax from previous location)
@@ -294,9 +325,8 @@ export class PanoramaViewer {
             path,
             (texture) => {
                 texture.colorSpace = THREE.SRGBColorSpace;
-                // Cache the texture
-                if (!this.textureCache) this.textureCache = new Map();
-                this.textureCache.set(path, texture);
+                // Cache the texture (with LRU eviction)
+                this._cacheTexture(path, texture);
 
                 this.basicMaterial.map = texture;
                 this.basicMaterial.needsUpdate = true;
@@ -348,7 +378,7 @@ export class PanoramaViewer {
                 path,
                 (texture) => {
                     texture.colorSpace = THREE.SRGBColorSpace;
-                    this.textureCache.set(path, texture);
+                    this._cacheTexture(path, texture);
                     this.pendingTextures.delete(path); // Remove from pending
                     console.log('Preloaded texture:', path);
                 },

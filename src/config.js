@@ -7,6 +7,14 @@
 export const API_BASE = 'https://api.neardev.my.id';
 
 export const CONFIG = {
+    // Renderer — main canvas. maxPixelRatio clamps DPR on high-density phones
+    // to cap fill-rate (a DPR-3 budget phone renders 9x the pixels of DPR-1).
+    renderer: {
+        maxPixelRatio: 2,
+        antialias: true,
+        preserveDrawingBuffer: true
+    },
+
     // Camera FOV Settings
     fov: {
         default: 85,
@@ -92,7 +100,8 @@ export const CONFIG = {
         sphereRadius: 50,
         sphereSegments: { width: 128, height: 64 },
         hotspotRadius: 4.5,
-        loadingSpinnerSpeed: 0.1
+        loadingSpinnerSpeed: 0.1,
+        textureCacheLimit: 8     // max panorama textures kept in memory (LRU eviction)
     },
 
     // Control Dock
@@ -116,6 +125,10 @@ export const CONFIG = {
     // VR Settings
     vr: {
         cardboardIPD: 0.065,
+        // Stereo path is the heaviest (2 scene renders + 2 post passes per frame).
+        // Clamp DPR and MSAA here so budget phones don't tank FPS / overheat.
+        stereoMaxPixelRatio: 2,
+        stereoMSAASamples: 2,
         fadeTime: 500,
         swipeThreshold: 30,
         fullscreenPollInterval: 500,
