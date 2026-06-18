@@ -27,7 +27,11 @@ export class PanoramaViewer {
         this.isAdminMode = false;
 
         // 1. Sphere Pano (radius must be < camera far clip)
-        const geometry = new THREE.SphereGeometry(50, 64, 32); // Reduced segments as parallax is gone
+        const geometry = new THREE.SphereGeometry(
+            CONFIG.panorama.sphereRadius,
+            CONFIG.panorama.sphereSegments.width,
+            CONFIG.panorama.sphereSegments.height
+        );
         geometry.scale(-1, 1, 1);
 
         // Basic material only - Boosted for maximum brightness

@@ -28,13 +28,13 @@ export class OrbitalMenu {
             const itemGroup = new THREE.Group();
 
             // --- Image Mesh ---
-            const imgGeo = new THREE.PlaneGeometry(1.8, 1.2, 32, 1);
+            const imgGeo = new THREE.PlaneGeometry(CONFIG.menu.itemWidth, CONFIG.menu.itemHeight, 32, 1);
             CanvasUI.curveGeometry(imgGeo, 2.5);
             const imgMat = new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
             const imgMesh = new THREE.Mesh(imgGeo, imgMat);
 
             // --- Text Mesh ---
-            const textGeo = new THREE.PlaneGeometry(1.8, 0.48, 32, 1);
+            const textGeo = new THREE.PlaneGeometry(CONFIG.menu.itemWidth, 0.48, 32, 1);
             CanvasUI.curveGeometry(textGeo, 2.5);
             const textMat = new THREE.MeshBasicMaterial({ map: CanvasUI.createMenuTextTexture(location), transparent: true, side: THREE.DoubleSide, depthTest: false });
             const textMesh = new THREE.Mesh(textGeo, textMat);

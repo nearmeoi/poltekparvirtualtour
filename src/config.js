@@ -49,10 +49,9 @@ export const CONFIG = {
     // Menu Settings
     menu: {
         radius: 2.5,
-        itemWidth: 0.9,
-        itemHeight: 0.6,
+        itemWidth: 1.8,          // orbital menu card width (world units)
+        itemHeight: 1.2,         // orbital menu card height (world units)
         subMenuRadius: 1.8,
-        easeSpeed: 0.08,
         lookDownThreshold: -0.45,
         hoverScale: 1.2
     },
@@ -88,7 +87,7 @@ export const CONFIG = {
         flickThreshold: 1.5
     },
 
-    // Background
+    // Background — vertical gradient of the placeholder environment sphere
     background: {
         radius: 80,
         topColor: '#404040',
@@ -98,8 +97,8 @@ export const CONFIG = {
     // Panorama Viewer
     panorama: {
         sphereRadius: 50,
-        sphereSegments: { width: 128, height: 64 },
-        hotspotRadius: 4.5,
+        sphereSegments: { width: 64, height: 32 },  // parallax removed → modest segment count
+        hotspotRadius: 3,        // default hotspot plane size (world units) when data.size unset
         loadingSpinnerSpeed: 0.1,
         textureCacheLimit: 8     // max panorama textures kept in memory (LRU eviction)
     },
@@ -111,15 +110,6 @@ export const CONFIG = {
         lookAtY: 0.6,
         followEaseSpeed: 0.08,
         lookDownThreshold: -0.45 // radians (~-26°)
-    },
-
-    // Tour Director (Cinematic Mode)
-    tour: {
-        transitionDuration: 800,  // ms per phase
-        peakFOV: 140,             // Wide "rushing" FOV
-        motionBlur: 20,           // px blur at peak
-        dockRadius: 1.8,
-        dockFollowSpeed: 0.08
     },
 
     // VR Settings

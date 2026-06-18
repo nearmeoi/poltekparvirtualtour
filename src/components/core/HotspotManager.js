@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CONFIG } from '../../config.js';
 
 export class HotspotManager {
     constructor(scene, bus) {
@@ -52,7 +53,7 @@ export class HotspotManager {
         if (!data) return null;
 
         const type = data.type || 'arrow';
-        const size = data.size || 3;
+        const size = data.size || CONFIG.panorama.hotspotRadius;
         const color = data.color || null;
         const iconUrl = data.icon_url || null;
 

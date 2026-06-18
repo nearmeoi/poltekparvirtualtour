@@ -407,8 +407,11 @@ class App {
         const ctx = canvas.getContext('2d');
         const { width: w, height: h } = canvas;
 
-        // Solid dark base
-        ctx.fillStyle = '#111111';
+        // Vertical gradient base (top → bottom)
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, CONFIG.background.topColor);
+        grad.addColorStop(1, CONFIG.background.bottomColor);
+        ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
 
         // Horizon line + cardinal verticals (N/E/S/W)
