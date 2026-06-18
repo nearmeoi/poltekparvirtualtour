@@ -30,7 +30,6 @@ import { CONFIG } from './config.js';
 
 // EventBus + Core Systems
 import { EventBus }       from './core/EventBus.js';
-import { VRStateManager } from './vr/VRStateManager.js';
 
 // Core Components
 import { GazeController }  from './components/core/GazeController.js';
@@ -88,7 +87,6 @@ class App {
         this.initScene();
         this.initComponents();
 
-        this.vrManager = new VRStateManager(this.renderer, this.camera, this.bus);
         this._setupBusListeners();
 
         this.initWebXR();
@@ -187,6 +185,13 @@ class App {
                     (this.vrButton.id === 'vr-goggle-button') ? 'flex' : '';
             }
         });
+
+        // Navigation hotspots: jump to the linked scene when clicked/gazed.
+        this.bus.on('hotspot:click', ({ data }) => {
+            if (data?.target) {
+                this.panoramaViewer?.navigateToScene(data.target);
+            }
+        });
     }
 
     // ======================== WEBXR ========================
@@ -219,10 +224,11 @@ class App {
             this.renderer, this.camera, this.controls, this.gyroscopeControls
         );
         this.cardboardManager.init();
-        this.vrManager.setStereoEffect(this.cardboardManager?.stereoEffect);
 
         this.cardboardManager.onModeChange = (isVR) => {
-            if (isVR) this.bus.emit('vr:entered', { mode: 'cardboard' });
+            // Cardboard is split-screen stereo — GazeController needs isStereoscopic
+            // to take its stereo reticle branch.
+            if (isVR) this.bus.emit('vr:entered', { mode: 'cardboard', isStereoscopic: true, ipd: CONFIG.vr.cardboardIPD });
             else       this.bus.emit('vr:exited');
         };
 
@@ -242,7 +248,7 @@ class App {
             this.camera.fov = CONFIG.fov.vr;
             this.camera.updateProjectionMatrix();
             if (this.gyroscopeControls) this.gyroscopeControls.enabled = false;
-            this.bus.emit('vr:entered', { mode: 'webxr' });
+            this.bus.emit('vr:entered', { mode: 'webxr', isStereoscopic: true });
         });
 
         // Session end

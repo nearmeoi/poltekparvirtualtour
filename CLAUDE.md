@@ -26,11 +26,11 @@ The EventBus (`src/core/EventBus.js`) is the backbone for decoupled communicatio
 
 | Event | Emitted by | Consumed by |
 |---|---|---|
-| `vr:entered` `{ mode, isStereoscopic, ipd }` | `main.js`, `VRStateManager` | `main.js`, `GazeController` |
-| `vr:exited` | `main.js`, `VRStateManager` | `main.js` |
+| `vr:entered` `{ mode, isStereoscopic, ipd }` | `main.js` | `main.js`, `GazeController` |
+| `vr:exited` | `main.js` | `main.js` |
 | `scene:change` `{ hotspots }` | `PanoramaViewer` | `HotspotManager` |
 | `scene:loaded` `{ sceneId, sceneData }` | `PanoramaViewer` | (general) |
-| `hotspot:click` `{ data }` | `HotspotManager` | `main.js` (opens panorama) |
+| `hotspot:click` `{ data }` | `HotspotManager` | `main.js` → `PanoramaViewer.navigateToScene(data.target)` |
 | `admin:hotspot-save` `{ hotspots }` | `AdminPanel` | `HotspotManager` |
 
 ### VR Strategy — Platform Decision Tree

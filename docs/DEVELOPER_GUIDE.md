@@ -92,11 +92,11 @@ Sistem pub/sub sederhana. Semua komunikasi antar-komponen wajib melalui ini.
 
 | Event | Emitter | Payload | Konsumer |
 |---|---|---|---|
-| `'vr:entered'` | VRStateManager | `{ mode, isStereoscopic, ipd }` | main.js, GazeController |
-| `'vr:exited'` | VRStateManager | `{ prevMode }` | main.js |
-| `'scene:loaded'` | PanoramaViewer | `{ sceneId, sceneData }` | AdminPanel |
+| `'vr:entered'` | main.js | `{ mode, isStereoscopic, ipd }` | main.js, GazeController |
+| `'vr:exited'` | main.js | — | main.js |
+| `'scene:loaded'` | PanoramaViewer | `{ sceneId, sceneData }` | NarrationController, AdminPanel |
 | `'scene:change'` | PanoramaViewer | `{ sceneId, hotspots, sceneData }` | AdminPanel |
-| `'hotspot:click'` | HotspotManager | `{ hotspotData }` | PanoramaViewer |
+| `'hotspot:click'` | HotspotManager | `{ data }` | main.js → `PanoramaViewer.navigateToScene(data.target)` |
 
 ### 3.4 Komponen — `src/components/`
 
@@ -204,17 +204,15 @@ mesh.onClick    = () => { ... };       // Callback saat diklik/gaze selesai
 | `iOSFullscreenHelper.js` | `iOSFullscreenHelper` | Hack fullscreen iOS via hidden video element `webkitEnterFullscreen`. Membuat video transparan, lalu z-index swap canvas di atasnya. |
 | `AudioContextManager.js` | `AudioContextManager` (object) | Wrapper `THREE.AudioContext`. `resume()` dipanggil setelah user gesture untuk memenuhi autoplay policy. |
 
-### 3.7 State Machine VR — `src/vr/VRStateManager.js`
+### 3.7 VR Entry/Exit — inline di `src/main.js`
 
-State: `'idle'` → `'entering'` → `'webxr'`|`'cardboard'` → `'exiting'` → `'idle'`
+VR entry/exit ditangani langsung di `main.js` (tidak ada state machine terpisah —
+`VRStateManager` sudah dihapus karena logikanya tidak pernah dipanggil di jalur live).
 
-| Method | Fungsi |
-|---|---|
-| `enterWebXR()` | Resume audio, set state `entering`. VRButton yang melakukan sesi XR sebenarnya. |
-| `confirmWebXR()` | Dipanggil saat XR session berhasil start. Emit `vr:entered`. |
-| `enterCardboard()` | Resume audio → fullscreen → lock landscape → enable stereo → set VR FOV → emit `vr:entered`. |
-| `exit()` | Disable stereo → reset FOV → exit fullscreen → emit `vr:exited`. |
-| `reset()` | Force state ke `idle` (untuk error recovery). |
+- **Cardboard:** `_setupCardboardFallback()` memasang `cardboardManager.onModeChange`,
+  yang emit `vr:entered { mode: 'cardboard', isStereoscopic: true, ipd }` / `vr:exited`.
+- **WebXR:** `_setupWebXR()` mendengarkan event `sessionstart`/`sessionend` pada
+  `renderer.xr`, lalu emit `vr:entered { mode: 'webxr', isStereoscopic: true }` / `vr:exited`.
 
 ---
 
@@ -356,12 +354,11 @@ webvr-v3/
 │   │       ├── CardboardButton.js      # Enter/Exit VR button
 │   │       ├── CardboardUI.js          # Mirrored HUD overlay
 │   │       └── VROverlay.js            # Pre-VR instruction flow
-│   ├── vr/
-│   │   └── VRStateManager.js           # VR state machine
 │   ├── data/
 │   │   ├── tourData.js                 # Museum + scene data
 │   │   ├── sceneMap.js                 # Panorama ID → path
-│   │   └── DataService.js              # Async data loader
+│   │   ├── captions/                   # Per-venue subtitle cue files (*.json)
+│   │   └── DataService.js              # Async data + caption loader
 │   ├── utils/
 │   │   ├── CanvasUI.js                 # Canvas2D texture factory
 │   │   ├── AnimationHelper.js          # Scale/opacity animation
@@ -401,5 +398,6 @@ webvr-v3/
 | `GazeController` | `gaze.*` |
 | `PanoramaViewer` | `controlDock.*`, `panorama.*` |
 | `CardboardModeManager` | `fov.vr`, `fov.default` |
-| `VRStateManager` | `fov.vr`, `fov.default`, `vr.cardboardIPD` |
+| `main.js` (cardboard `vr:entered`) | `vr.cardboardIPD` |
+| `StereoEffect` | `vr.stereoMaxPixelRatio`, `vr.stereoMSAASamples` |
 | `AudioControls` | (posisi diatur oleh caller, bukan langsung dari CONFIG) |
