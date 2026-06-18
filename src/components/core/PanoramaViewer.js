@@ -104,12 +104,13 @@ export class PanoramaViewer {
     }
 
     createBackButton() {
-        const geometry = new THREE.PlaneGeometry(0.4, 0.18);
+        // Same footprint as the narration buttons so BACK/PAUSE/SKIP form a uniform row.
+        const geometry = new THREE.PlaneGeometry(0.2, 0.18);
         const canvas = CanvasUI.createButtonTexture('BACK', {
-            width: 400,
+            width: 200,
             height: 180,
             radius: 40,
-            fontSize: 40
+            fontSize: 36
         });
 
         const texture = new THREE.CanvasTexture(canvas);
@@ -120,7 +121,7 @@ export class PanoramaViewer {
         });
 
         this.backBtn = new THREE.Mesh(geometry, material);
-        this.backBtn.position.set(0, CONFIG.layout.backButtonOffsetY, -1.6);
+        this.backBtn.position.set(-0.3, CONFIG.layout.backButtonOffsetY, -1.6); // left slot of centered row
         this.backBtn.lookAt(0, CONFIG.layout.menuY, 0);
 
         this.backBtn.userData.isInteractable = true;
@@ -164,7 +165,7 @@ export class PanoramaViewer {
         const { mesh: pauseMesh, canvas: pauseCanvas } = makeBtn('PAUSE');
         this.pauseBtn = pauseMesh;
         this._pauseBtnCanvas = pauseCanvas;
-        this.pauseBtn.position.set(0.5, y, -1.6);
+        this.pauseBtn.position.set(0, y, -1.6); // centre slot
         this.pauseBtn.lookAt(0, CONFIG.layout.menuY, 0);
         this.pauseBtn.onClick = () => { this._narrationController?.pause(); };
         this.pauseBtn.visible = false;
@@ -173,7 +174,7 @@ export class PanoramaViewer {
         // Skip button
         const { mesh: skipMesh } = makeBtn('SKIP');
         this.skipBtn = skipMesh;
-        this.skipBtn.position.set(0.9, y, -1.6);
+        this.skipBtn.position.set(0.3, y, -1.6); // right slot
         this.skipBtn.lookAt(0, CONFIG.layout.menuY, 0);
         this.skipBtn.onClick = () => { this._narrationController?.skip(); };
         this.skipBtn.visible = false;
