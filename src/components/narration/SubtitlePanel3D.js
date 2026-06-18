@@ -18,15 +18,19 @@ export class SubtitlePanel3D {
     }
 
     _createPanel() {
-        const w = CONFIG.narration.subtitleWidth;
-        const h = CONFIG.narration.subtitleHeight;
-
-        const canvasW = 1024;
-        const canvasH = Math.round(canvasW * (h / w));
+        // Canvas width is fixed for resolution; height grows with line count.
+        // World height is derived from the canvas aspect so text is never distorted.
+        this._canvasW = 1024;
+        this._padX = 40;
+        this._padY = 30;
+        this._fontSize = 52;
+        this._lineHeight = 68;
+        this._maxLines = 5;
+        this._worldH = null; // tracks current plane height to avoid rebuilds
 
         this.canvas = document.createElement('canvas');
-        this.canvas.width = canvasW;
-        this.canvas.height = canvasH;
+        this.canvas.width = this._canvasW;
+        this.canvas.height = this._padY * 2 + this._lineHeight; // single-line baseline
 
         this.texture = new THREE.CanvasTexture(this.canvas);
         this.texture.minFilter = THREE.LinearFilter;
@@ -40,58 +44,96 @@ export class SubtitlePanel3D {
         });
 
         this.mesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(w, h),
+            new THREE.PlaneGeometry(CONFIG.narration.subtitleWidth, CONFIG.narration.subtitleHeight),
             this.material
         );
         this.mesh.renderOrder = 9990;
         this.group.add(this.mesh);
     }
 
+    /**
+     * Greedily wrap text into lines that fit maxWidth. Words longer than a
+     * line are hard-broken by character. Caps at _maxLines, ellipsizing the
+     * last line if content remains.
+     */
+    _wrapLines(ctx, text, maxWidth) {
+        const lines = [];
+        const pushWrapped = (word) => {
+            // Hard-break a single word too wide to fit on its own line.
+            let chunk = '';
+            for (const ch of word) {
+                if (ctx.measureText(chunk + ch).width > maxWidth && chunk) {
+                    lines.push(chunk);
+                    chunk = ch;
+                } else {
+                    chunk += ch;
+                }
+            }
+            return chunk;
+        };
+
+        let line = '';
+        for (const word of text.split(/\s+/).filter(Boolean)) {
+            const candidate = line ? line + ' ' + word : word;
+            if (ctx.measureText(candidate).width <= maxWidth) {
+                line = candidate;
+                continue;
+            }
+            if (line) lines.push(line);
+            if (ctx.measureText(word).width > maxWidth) {
+                line = pushWrapped(word);
+            } else {
+                line = word;
+            }
+        }
+        if (line) lines.push(line);
+
+        if (lines.length > this._maxLines) {
+            lines.length = this._maxLines;
+            lines[this._maxLines - 1] = lines[this._maxLines - 1].replace(/.$/, '…');
+        }
+        return lines.length ? lines : [''];
+    }
+
     _drawText(text) {
-        const { width: cw, height: ch } = this.canvas;
+        const cw = this._canvasW;
         const ctx = this.canvas.getContext('2d');
+        ctx.font = `bold ${this._fontSize}px Roboto, sans-serif`;
+
+        const lines = this._wrapLines(ctx, text, cw - this._padX * 2);
+
+        // Resize canvas to fit the wrapped lines (resets the 2D context).
+        const ch = this._padY * 2 + lines.length * this._lineHeight;
+        this.canvas.height = ch;
+
         ctx.clearRect(0, 0, cw, ch);
-
-        // Truncate very long text to prevent silent overflow past 2 lines
-        const MAX_CHARS = 120;
-        if (text.length > MAX_CHARS) text = text.slice(0, MAX_CHARS - 1) + '…';
-
         CanvasUI.roundRect(ctx, 8, 8, cw - 16, ch - 16, 20);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.70)';
         ctx.fill();
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 52px Roboto, sans-serif';
+        ctx.font = `bold ${this._fontSize}px Roboto, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.9)';
         ctx.shadowBlur = 6;
 
-        const maxWidth = cw - 80;
-        const words = text.split(' ');
-        let line1 = '';
-        let line2 = '';
-        let onLine2 = false;
+        const startY = this._padY + this._lineHeight / 2;
+        lines.forEach((line, i) => {
+            ctx.fillText(line, cw / 2, startY + i * this._lineHeight);
+        });
 
-        for (const word of words) {
-            const candidate = (onLine2 ? line2 : line1) + word + ' ';
-            if (!onLine2 && ctx.measureText(candidate).width > maxWidth) {
-                onLine2 = true;
-            }
-            if (onLine2) line2 += word + ' ';
-            else line1 += word + ' ';
-        }
-
-        const l1 = line1.trim();
-        const l2 = line2.trim();
-        if (l2) {
-            ctx.fillText(l1, cw / 2, ch / 2 - 34);
-            ctx.fillText(l2, cw / 2, ch / 2 + 34);
-        } else {
-            ctx.fillText(l1, cw / 2, ch / 2);
-        }
-
+        this._syncGeometry(ch);
         this.texture.needsUpdate = true;
+    }
+
+    /** Rebuild the plane so its world aspect matches the canvas (no distortion). */
+    _syncGeometry(canvasH) {
+        const worldH = CONFIG.narration.subtitleWidth * (canvasH / this._canvasW);
+        if (worldH === this._worldH) return;
+        this._worldH = worldH;
+        this.mesh.geometry.dispose();
+        this.mesh.geometry = new THREE.PlaneGeometry(CONFIG.narration.subtitleWidth, worldH);
     }
 
     show(text) {
