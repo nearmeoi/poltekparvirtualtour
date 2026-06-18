@@ -31,7 +31,6 @@ import { CONFIG } from './config.js';
 // EventBus + Core Systems
 import { EventBus }       from './core/EventBus.js';
 import { VRStateManager } from './vr/VRStateManager.js';
-import { TextureManager } from './components/core/TextureManager.js';
 
 // Core Components
 import { GazeController }  from './components/core/GazeController.js';
@@ -57,7 +56,6 @@ class App {
     constructor() {
         // ── EventBus + Core Systems ─────────────────────────────────────────
         this.bus     = new EventBus();
-        this.textures = new TextureManager();
 
         // ── Device Detection ────────────────────────────────────────────────
         this.isIOSDevice    = isIOS() || isCardboardForced();
@@ -456,8 +454,7 @@ class App {
             () => this.onPanoramaBack(),
             this.camera,
             this.renderer,
-            this.bus,
-            this.textures
+            this.bus
         );
         this.panoramaViewer.setInfoOverlay(this.infoOverlay);
         this.panoramaViewer.setInfoPanel3D(this.infoPanel3D);

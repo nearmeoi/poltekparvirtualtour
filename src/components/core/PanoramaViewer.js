@@ -8,7 +8,7 @@ import { SCENE_MAP } from '../../data/sceneMap.js';
 import { HotspotManager } from './HotspotManager.js';
 
 export class PanoramaViewer {
-    constructor(scene, onBack, camera, renderer, bus, textureManager) {
+    constructor(scene, onBack, camera, renderer, bus) {
         this.scene = scene;
         this.onBack = onBack;
         this.camera = camera;
