@@ -597,15 +597,8 @@ class App {
     }
 }
 
-// Single-instance guard + HMR teardown. Without this, a dev hot-reload could
-// leave a previous App's render loop, narration audio, and 3D panels alive and
-// stack a new App on top — which surfaced as duplicated subtitles/controls.
-if (window.__vtApp) window.__vtApp.dispose();
-window.__vtApp = new App();
-
-if (import.meta.hot) {
-    import.meta.hot.dispose(() => {
-        window.__vtApp?.dispose();
-        window.__vtApp = null;
-    });
-}
+// Vite full-reloads this entry module on dependency changes, which is the clean
+// teardown in dev (one App per page, render loop always running). A prior
+// import.meta.hot.dispose hook here disposed the renderer on HMR without
+// recreating the App, which killed the render loop — do not reintroduce it.
+new App();
