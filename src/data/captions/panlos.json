@@ -1,8 +1,32 @@
 [
-  { "start": 0,    "end": 2.5,  "text": "Selamat datang di Pantai Losari." },
-  { "start": 2.5,  "end": 6.9,  "text": "Di titik ini, suasana pesisir Kota Makassar mulai terasa." },
-  { "start": 6.9,  "end": 11.9, "text": "Angin laut berhembus pelan, sementara ruang terbuka di depan Anda" },
-  { "start": 11.9, "end": 16.6, "text": "memperlihatkan wajah waterfront yang menjadi kebanggaan kota." },
-  { "start": 16.6, "end": 23.2, "text": "Dari sinilah perjalanan virtual kita dimulai, menyusuri kawasan yang hidup oleh laut," },
-  { "start": 23.2, "end": 26.0, "text": "budaya, dan aktivitas masyarakatnya." }
+  {
+    "start": 0,
+    "end": 2.89,
+    "text": "Selamat datang di Pantai Losari."
+  },
+  {
+    "start": 2.89,
+    "end": 7.26,
+    "text": "Di titik ini, suasana pesisir Kota Makassar mulai terasa."
+  },
+  {
+    "start": 7.26,
+    "end": 11.7,
+    "text": "Angin laut berhembus pelan, sementara ruang terbuka di depan Anda"
+  },
+  {
+    "start": 11.7,
+    "end": 16.33,
+    "text": "memperlihatkan wajah waterfront yang menjadi kebanggaan kota."
+  },
+  {
+    "start": 16.33,
+    "end": 22.96,
+    "text": "Dari sinilah perjalanan virtual kita dimulai, menyusuri kawasan yang hidup oleh laut,"
+  },
+  {
+    "start": 22.96,
+    "end": 25.45,
+    "text": "budaya, dan aktivitas masyarakatnya."
+  }
 ]
