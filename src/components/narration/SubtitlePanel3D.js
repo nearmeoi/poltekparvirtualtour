@@ -18,19 +18,22 @@ export class SubtitlePanel3D {
     }
 
     _createPanel() {
-        // Canvas width is fixed for resolution; height grows with line count.
-        // World height is derived from the canvas aspect so text is never distorted.
         this._canvasW = 1024;
         this._padX = 40;
         this._padY = 30;
         this._fontSize = 52;
         this._lineHeight = 68;
         this._maxLines = 5;
-        this._worldH = null; // tracks current plane height to avoid rebuilds
+
+        // FIXED canvas sized for the max line count — never resized. Resizing a
+        // canvas-backed texture left the previous (taller) caption ghosting above
+        // a shorter one, because the GPU texture kept stale pixels. With a fixed
+        // canvas we just clear + draw a content-sized box centered in it.
+        this._canvasH = this._padY * 2 + this._maxLines * this._lineHeight;
 
         this.canvas = document.createElement('canvas');
         this.canvas.width = this._canvasW;
-        this.canvas.height = this._padY * 2 + this._lineHeight; // single-line baseline
+        this.canvas.height = this._canvasH;
 
         this.texture = new THREE.CanvasTexture(this.canvas);
         this.texture.minFilter = THREE.LinearFilter;
@@ -43,8 +46,11 @@ export class SubtitlePanel3D {
             side: THREE.DoubleSide,
         });
 
+        // Plane matches the canvas aspect (no text distortion); size is fixed,
+        // short captions simply leave transparent margins above/below the box.
+        const worldH = CONFIG.narration.subtitleWidth * (this._canvasH / this._canvasW);
         this.mesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(CONFIG.narration.subtitleWidth, CONFIG.narration.subtitleHeight),
+            new THREE.PlaneGeometry(CONFIG.narration.subtitleWidth, worldH),
             this.material
         );
         this.mesh.renderOrder = 9990;
@@ -97,17 +103,19 @@ export class SubtitlePanel3D {
 
     _drawText(text) {
         const cw = this._canvasW;
+        const chFull = this._canvasH;
         const ctx = this.canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, cw, chFull);
         ctx.font = `bold ${this._fontSize}px Roboto, sans-serif`;
 
         const lines = this._wrapLines(ctx, text, cw - this._padX * 2);
 
-        // Resize canvas to fit the wrapped lines (resets the 2D context).
-        const ch = this._padY * 2 + lines.length * this._lineHeight;
-        this.canvas.height = ch;
+        // Content-sized box, vertically centered in the fixed-height canvas.
+        const contentH = this._padY * 2 + lines.length * this._lineHeight;
+        const top = (chFull - contentH) / 2;
 
-        ctx.clearRect(0, 0, cw, ch);
-        CanvasUI.roundRect(ctx, 8, 8, cw - 16, ch - 16, 20);
+        CanvasUI.roundRect(ctx, 8, top + 8, cw - 16, contentH - 16, 20);
         ctx.fillStyle = 'rgba(0, 0, 0, 0.70)';
         ctx.fill();
 
@@ -118,22 +126,12 @@ export class SubtitlePanel3D {
         ctx.shadowColor = 'rgba(0,0,0,0.9)';
         ctx.shadowBlur = 6;
 
-        const startY = this._padY + this._lineHeight / 2;
+        const startY = top + this._padY + this._lineHeight / 2;
         lines.forEach((line, i) => {
             ctx.fillText(line, cw / 2, startY + i * this._lineHeight);
         });
 
-        this._syncGeometry(ch);
         this.texture.needsUpdate = true;
-    }
-
-    /** Rebuild the plane so its world aspect matches the canvas (no distortion). */
-    _syncGeometry(canvasH) {
-        const worldH = CONFIG.narration.subtitleWidth * (canvasH / this._canvasW);
-        if (worldH === this._worldH) return;
-        this._worldH = worldH;
-        this.mesh.geometry.dispose();
-        this.mesh.geometry = new THREE.PlaneGeometry(CONFIG.narration.subtitleWidth, worldH);
     }
 
     show(text) {
