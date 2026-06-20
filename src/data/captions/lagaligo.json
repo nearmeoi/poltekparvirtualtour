@@ -1,13 +1,7 @@
 [
-  { "start": 0,    "end": 3.5,  "text": "Selamat datang di Museum La Galigo," },
-  { "start": 3.5,  "end": 6.3,  "text": "salah satu ruang pamer utama" },
-  { "start": 6.3,  "end": 9.2,  "text": "di kawasan Benteng Rotterdam." },
-  { "start": 9.2,  "end": 12.8, "text": "Dari area pintu masuk ini, Anda akan" },
-  { "start": 12.8, "end": 15.5, "text": "memasuki Gedung M, bangunan" },
-  { "start": 15.5, "end": 18.3, "text": "terpanjang di dalam benteng," },
-  { "start": 18.3, "end": 22.3, "text": "yang pada masa kolonial pernah berfungsi" },
-  { "start": 22.3, "end": 27.5, "text": "sebagai gudang sekaligus pusat perdagangan Belanda." },
-  { "start": 27.5, "end": 31.3, "text": "Kini, bangunan berarsitektur perpaduan" },
-  { "start": 31.3, "end": 35.3, "text": "Renaisans dan Belanda ini mengantar kita" },
-  { "start": 35.3, "end": 39.8, "text": "menelusuri sejarah panjang Sulawesi Selatan." }
+  { "start": 0,    "end": 9.3,  "text": "Selamat datang di Museum La Galigo, salah satu ruang pamer utama di kawasan Benteng Rotterdam." },
+  { "start": 9.3,  "end": 18.5, "text": "Dari area pintu masuk ini, Anda akan memasuki Gedung M, bangunan terpanjang di dalam benteng" },
+  { "start": 18.5, "end": 27.7, "text": "yang pada masa kolonial pernah berfungsi sebagai gudang sekaligus pusat perdagangan Belanda." },
+  { "start": 27.7, "end": 34.0, "text": "Kini, bangunan berarsitektur perpaduan Renaisans dan Belanda ini" },
+  { "start": 34.0, "end": 39.8, "text": "mengantar kita menelusuri sejarah panjang Sulawesi Selatan." }
 ]

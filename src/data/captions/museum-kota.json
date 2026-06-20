@@ -1,11 +1,8 @@
 [
   { "start": 0,    "end": 3.0,  "text": "Selamat datang di Museum Kota Makassar." },
-  { "start": 3.0,  "end": 6.5,  "text": "Di tempat ini, perjalanan sebuah kota disimpan" },
-  { "start": 6.5,  "end": 9.0,  "text": "melalui ruang, benda, dan cerita" },
+  { "start": 3.0,  "end": 9.0,  "text": "Di tempat ini, perjalanan sebuah kota disimpan melalui ruang, benda, dan cerita" },
   { "start": 9.0,  "end": 11.7, "text": "yang terus hidup dari masa ke masa." },
-  { "start": 11.7, "end": 15.2, "text": "Melalui tur virtual ini, Anda akan menelusuri" },
-  { "start": 15.2, "end": 18.1, "text": "jejak Makassar sebagai kota pelabuhan," },
-  { "start": 18.1, "end": 21.3, "text": "pusat perdagangan, ruang pertemuan budaya," },
-  { "start": 21.3, "end": 24.4, "text": "hingga kota modern yang terus berkembang" },
-  { "start": 24.4, "end": 26.4, "text": "tanpa melupakan sejarahnya." }
+  { "start": 11.7, "end": 18.1, "text": "Melalui tur virtual ini, Anda akan menelusuri jejak Makassar sebagai kota pelabuhan," },
+  { "start": 18.1, "end": 21.4, "text": "pusat perdagangan, ruang pertemuan budaya," },
+  { "start": 21.4, "end": 26.4, "text": "hingga kota modern yang terus berkembang tanpa melupakan sejarahnya." }
 ]
