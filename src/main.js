@@ -597,8 +597,16 @@ class App {
     }
 }
 
-// Vite full-reloads this entry module on dependency changes, which is the clean
-// teardown in dev (one App per page, render loop always running). A prior
-// import.meta.hot.dispose hook here disposed the renderer on HMR without
-// recreating the App, which killed the render loop — do not reintroduce it.
-new App();
+let app = new App();
+
+// Dev hot-reload: tear down the old App and rebuild a fresh one *in place* so a
+// stale render loop, narration audio, or 3D panels can't stack on top of a new
+// App (which showed up as duplicated/overlapping subtitles in a long dev tab).
+// accept() makes this module re-run on any update in its graph; dispose() runs
+// first to fully clean up the previous App (it now stops the loop + disposes the
+// renderer + removes the canvas). Both are required — dispose without accept
+// kills the renderer without recreating the App.
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => app?.dispose());
+    import.meta.hot.accept();
+}
