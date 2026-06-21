@@ -57,6 +57,24 @@ Tour data lives in two places:
 
 Hotspots are stored in `localStorage` keyed by `hotspots_<sceneId>` (written by `AdminPersistence`). When a scene loads, `PanoramaViewer` reads from localStorage first; if absent, falls back to the JSON data.
 
+### Narration & Captions (audio + 3D subtitles)
+
+This subsystem is built and verified — **build on it; don't rewrite it.** It plays a per-scene narration audio and shows synced 3D subtitles.
+
+**Flow:** `PanoramaViewer` emits `scene:loaded { sceneData }` → `NarrationController` (`src/components/narration/NarrationController.js`) reads `sceneData.audio` and the captions, plays the audio, and each frame shows the cue whose `[start, end)` contains `audio.currentTime`. A `_loadToken` guards against late async caption fetches after the user moved on.
+
+**Where captions live (per scene):** a scene's data carries **either**
+- `captions: "<id>"` → loads `src/data/captions/<id>.json` lazily via `DataService.getCaptions()` (preferred — content lives outside code), **or**
+- an inline `subtitles: [{ start, end, text }]` array (legacy fallback, still supported).
+
+A caption file is just `[{ "start": <s>, "end": <s>, "text": "<line>" }, …]`. Cues should be phrase/sentence-level (one block per natural pause), not arbitrary fragments — longer blocks tolerate timing drift and read better.
+
+**The 3D panel** (`src/components/narration/SubtitlePanel3D.js`): a `CanvasTexture` plane that follows the camera. It uses a **fixed-size canvas** (sized for `_maxLines`) and word-wraps + auto-fits text, drawing a content-sized box centered in it. The canvas is never resized — resizing a canvas-backed texture left stale pixels and ghosted the previous caption ("stacked subtitles"). Styling constants live at the top of `_createPanel`; positioning/sizing in `CONFIG.narration`.
+
+**Generating caption timings — `scripts/time-captions.mjs`:** run `node scripts/time-captions.mjs` (needs `ffmpeg` on PATH; `--dry` to preview). It runs `ffmpeg silencedetect` on each audio file to find the real speech window (trims intro/trailing silence) and the pauses between phrases, then distributes the caption *text* across the speech window and snaps each boundary to the nearest detected pause — no STT/network/API key. Add a venue/scene to its `JOBS` array (audio path + caption-file id) and it writes the timed JSON. **Always re-run this after re-recording audio or editing caption text.**
+
+**Adding narration to a new scene** (no engine changes): drop the `N. Title.mp3` in `public/assets/Narasi/Audio/...`, put the transcript lines in `src/data/captions/<id>.json`, add `<id>` to the script's `JOBS` and run it, then reference `audio` + `captions: "<id>"` on the scene's data.
+
 ### Admin Panel
 
 Available **only in dev mode** (`import.meta.env.PROD` gates the lazy import). Access it via `window.adminPanel` in the browser console. The panel saves hotspot edits to `localStorage`; use its Export button to get a JSON file for committing.
