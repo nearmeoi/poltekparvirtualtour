@@ -106,11 +106,10 @@ export class PanoramaViewer {
     createBackButton() {
         // Same footprint as the narration buttons so BACK/PAUSE/SKIP form a uniform row.
         const geometry = new THREE.PlaneGeometry(0.2, 0.18);
-        const canvas = CanvasUI.createButtonTexture('BACK', {
+        const canvas = CanvasUI.createIconButtonTexture('back', {
             width: 200,
             height: 180,
-            radius: 40,
-            fontSize: 36
+            radius: 40
         });
 
         const texture = new THREE.CanvasTexture(canvas);
@@ -141,9 +140,9 @@ export class PanoramaViewer {
     }
 
     createNarrationButtons() {
-        const makeBtn = (label) => {
-            const canvas = CanvasUI.createButtonTexture(label, {
-                width: 200, height: 180, radius: 40, fontSize: 36
+        const makeBtn = (icon) => {
+            const canvas = CanvasUI.createIconButtonTexture(icon, {
+                width: 200, height: 180, radius: 40
             });
             const texture = new THREE.CanvasTexture(canvas);
             const mat = new THREE.MeshBasicMaterial({
@@ -162,7 +161,7 @@ export class PanoramaViewer {
         const y = CONFIG.layout.backButtonOffsetY;
 
         // Pause / Resume button
-        const { mesh: pauseMesh, canvas: pauseCanvas } = makeBtn('PAUSE');
+        const { mesh: pauseMesh, canvas: pauseCanvas } = makeBtn('pause');
         this.pauseBtn = pauseMesh;
         this._pauseBtnCanvas = pauseCanvas;
         this.pauseBtn.position.set(0, y, -1.6); // centre slot
@@ -172,7 +171,7 @@ export class PanoramaViewer {
         this.controlDock.add(this.pauseBtn);
 
         // Skip button
-        const { mesh: skipMesh } = makeBtn('SKIP');
+        const { mesh: skipMesh } = makeBtn('skip');
         this.skipBtn = skipMesh;
         this.skipBtn.position.set(0.3, y, -1.6); // right slot
         this.skipBtn.lookAt(0, CONFIG.layout.menuY, 0);
@@ -1132,9 +1131,9 @@ export class PanoramaViewer {
                 const paused = this._narrationController.isPaused();
                 if (paused !== this._narrationPaused) {
                     this._narrationPaused = paused;
-                    const label = paused ? 'PLAY' : 'PAUSE';
-                    const newCanvas = CanvasUI.createButtonTexture(label, {
-                        width: 200, height: 180, radius: 40, fontSize: 36
+                    // playing -> show pause icon; paused -> show play icon
+                    const newCanvas = CanvasUI.createIconButtonTexture(paused ? 'play' : 'pause', {
+                        width: 200, height: 180, radius: 40
                     });
                     const oldMap = this.pauseBtn.material.map;
                     this.pauseBtn.material.map = new THREE.CanvasTexture(newCanvas);

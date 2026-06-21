@@ -64,6 +64,76 @@ export const CanvasUI = {
     },
 
     /**
+     * Creates a control-dock button texture with a crisp vector icon instead of
+     * text. Same pill background as createButtonTexture.
+     * @param {'play'|'pause'|'skip'|'back'} icon
+     */
+    createIconButtonTexture: (icon, options = {}) => {
+        const width = options.width || 200;
+        const height = options.height || 180;
+        const radius = options.radius || 40;
+        const bgColor = options.bgColor || 'rgba(200, 50, 50, 0.4)';
+        const borderColor = options.borderColor || 'rgba(255, 100, 100, 0.8)';
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, width, height);
+        CanvasUI.roundRect(ctx, 10, 10, width - 20, height - 20, radius);
+        ctx.fillStyle = bgColor;
+        ctx.fill();
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 8;
+        ctx.stroke();
+
+        const cx = width / 2;
+        const cy = height / 2;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+
+        // right-pointing filled triangle, left edge at x, vertically centered
+        const tri = (x, w, h) => {
+            ctx.beginPath();
+            ctx.moveTo(x, cy - h / 2);
+            ctx.lineTo(x, cy + h / 2);
+            ctx.lineTo(x + w, cy);
+            ctx.closePath();
+            ctx.fill();
+        };
+
+        if (icon === 'play') {
+            tri(cx - 20, 52, 64);
+        } else if (icon === 'pause') {
+            const bw = 16, bh = 64, gap = 12;
+            ctx.fillRect(cx - gap - bw, cy - bh / 2, bw, bh);
+            ctx.fillRect(cx + gap, cy - bh / 2, bw, bh);
+        } else if (icon === 'skip') {
+            tri(cx - 30, 30, 60);
+            tri(cx + 2, 30, 60);
+        } else if (icon === 'back') {
+            ctx.lineWidth = 14;
+            ctx.beginPath();
+            ctx.moveTo(cx + 28, cy);
+            ctx.lineTo(cx - 20, cy);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx - 20, cy);
+            ctx.lineTo(cx - 2, cy - 18);
+            ctx.moveTo(cx - 20, cy);
+            ctx.lineTo(cx - 2, cy + 18);
+            ctx.stroke();
+        }
+
+        return canvas;
+    },
+
+    /**
      * Creates a Play/Pause button texture
      */
     createPlayButtonTexture: (isPlaying) => {
