@@ -128,6 +128,23 @@ export const CanvasUI = {
             ctx.moveTo(cx - 20, cy);
             ctx.lineTo(cx - 2, cy + 18);
             ctx.stroke();
+        } else if (icon === 'replay') {
+            const r = 30;
+            ctx.lineWidth = 12;
+            // ~300° arc, open at the top-right where the arrowhead sits
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, -Math.PI * 0.25, Math.PI * 1.35, false);
+            ctx.stroke();
+            // filled arrowhead at the arc's start (top-right), pointing clockwise
+            const a = -Math.PI * 0.25;
+            const hx = cx + r * Math.cos(a);
+            const hy = cy + r * Math.sin(a);
+            ctx.beginPath();
+            ctx.moveTo(hx + 14, hy - 6);
+            ctx.lineTo(hx - 10, hy - 12);
+            ctx.lineTo(hx + 2, hy + 12);
+            ctx.closePath();
+            ctx.fill();
         }
 
         return canvas;

@@ -10,6 +10,9 @@ export class NarrationController {
         // Bumped on every load/dispose so async caption fetches that resolve late
         // (after the user already moved to another scene) can be discarded.
         this._loadToken = 0;
+        // Remember the current scene's data so the narration can be replayed
+        // after it ends or is skipped (the audio element itself is disposed).
+        this._lastSceneData = null;
         this._subtitlePanel = new SubtitlePanel3D(camera, scene);
 
         this._unsubscribe = this._bus.on('scene:loaded', ({ sceneData }) => this._loadScene(sceneData));
@@ -17,6 +20,7 @@ export class NarrationController {
 
     _loadScene(sceneData) {
         this._disposeAudio();
+        this._lastSceneData = sceneData || null;
         if (!sceneData?.audio) return;
 
         const token = ++this._loadToken;
@@ -78,6 +82,23 @@ export class NarrationController {
 
     isActive() {
         return this._audio !== null;
+    }
+
+    /** Restart this scene's narration from the beginning. */
+    replay() {
+        if (this._lastSceneData?.audio) this._loadScene(this._lastSceneData);
+    }
+
+    /**
+     * Control-dock state for the narration buttons:
+     * 'playing' | 'paused' | 'replay' (finished/skipped but replayable) | 'none'.
+     */
+    getState() {
+        const a = this._audio;
+        if (a && !a.paused && !a.ended) return 'playing';
+        if (a && a.paused && !a.ended) return 'paused';
+        if (this._lastSceneData?.audio) return 'replay';
+        return 'none';
     }
 
     _disposeAudio() {

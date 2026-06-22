@@ -169,7 +169,12 @@ export class PanoramaViewer {
         this._pauseBtnCanvas = pauseCanvas;
         this.pauseBtn.position.set(0, y, -1.6); // centre slot
         this.pauseBtn.lookAt(0, CONFIG.layout.menuY, 0);
-        this.pauseBtn.onClick = () => { this._narrationController?.pause(); };
+        this.pauseBtn.onClick = () => {
+            const nc = this._narrationController;
+            if (!nc) return;
+            if (nc.getState() === 'replay') nc.replay();
+            else nc.pause();
+        };
         this.pauseBtn.visible = false;
         this.controlDock.add(this.pauseBtn);
 
@@ -1126,28 +1131,29 @@ export class PanoramaViewer {
         animateObject(this.pauseBtn);
         animateObject(this.skipBtn);
 
-        // Show/hide narration buttons and sync pause label
+        // Narration controls. Centre button shows pause/play while narrating and
+        // becomes a replay button once narration finishes/is skipped; skip only
+        // shows while there is active narration to skip.
         if (this._narrationController) {
-            const active = this._narrationController.isActive();
-            if (this.pauseBtn) this.pauseBtn.visible = active;
-            if (this.skipBtn)  this.skipBtn.visible  = active;
+            const state = this._narrationController.getState(); // playing|paused|replay|none
+            const icon = state === 'playing' ? 'pause'
+                       : state === 'paused'  ? 'play'
+                       : state === 'replay'  ? 'replay'
+                       : null;
 
-            if (active) {
-                const paused = this._narrationController.isPaused();
-                if (paused !== this._narrationPaused) {
-                    this._narrationPaused = paused;
-                    // playing -> show pause icon; paused -> show play icon
-                    const newCanvas = CanvasUI.createIconButtonTexture(paused ? 'play' : 'pause', {
-                        width: 200, height: 180, radius: 40
-                    });
-                    const oldMap = this.pauseBtn.material.map;
-                    this.pauseBtn.material.map = new THREE.CanvasTexture(newCanvas);
-                    this.pauseBtn.material.needsUpdate = true;
-                    if (oldMap) oldMap.dispose();
-                    this._pauseBtnCanvas = newCanvas;
-                }
-            } else {
-                this._narrationPaused = false;
+            if (this.pauseBtn) this.pauseBtn.visible = icon !== null;
+            if (this.skipBtn)  this.skipBtn.visible  = state === 'playing' || state === 'paused';
+
+            if (icon && icon !== this._pauseBtnIcon) {
+                this._pauseBtnIcon = icon;
+                const newCanvas = CanvasUI.createIconButtonTexture(icon, {
+                    width: 200, height: 180, radius: 40
+                });
+                const oldMap = this.pauseBtn.material.map;
+                this.pauseBtn.material.map = new THREE.CanvasTexture(newCanvas);
+                this.pauseBtn.material.needsUpdate = true;
+                if (oldMap) oldMap.dispose();
+                this._pauseBtnCanvas = newCanvas;
             }
         }
 
