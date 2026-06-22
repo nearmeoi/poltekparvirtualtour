@@ -170,14 +170,16 @@ export class GazeController {
 
             if (target) {
                 // Re-entry guard: if a gaze lock just lifted, the object centred at that
-                // instant is suppressed until the reticle leaves it once. The user must
-                // make a deliberate selection rather than auto-triggering whatever spawned
-                // under the reticle.
+                // instant is suppressed until the reticle leaves it once — stops the orbital
+                // menu from auto-selecting the item it opens centred on. Control-dock buttons
+                // opt out (userData.noReentryGuard) so they always respond to a dwell, even if
+                // the reticle lands on one right as the scene-entry lock lifts.
+                const exemptGuard = !!target.userData.noReentryGuard;
                 if (this._lockJustEnded) {
                     this._lockJustEnded = false;
-                    this._suppressObject = target;
+                    this._suppressObject = exemptGuard ? null : target;
                 }
-                const suppressed = this._suppressObject === target;
+                const suppressed = !exemptGuard && this._suppressObject === target;
                 if (!suppressed) this._suppressObject = null;
 
                 if (this.hoveredObject !== target) {

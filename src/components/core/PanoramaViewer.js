@@ -128,6 +128,7 @@ export class PanoramaViewer {
         this.backBtn.userData.targetScale = new THREE.Vector3(1, 1, 1);
         this.backBtn.userData.animProgress = 1;
         this.backBtn.userData.label = 'Back Button';
+        this.backBtn.userData.noReentryGuard = true;
         this.backBtn.userData.activationTime = 2.5; // Longer activation for back button to prevent accidental VR triggers
         this.backBtn.onHoverIn = () => this.backBtn.userData.targetScale.set(1.1, 1.1, 1.1);
         this.backBtn.onHoverOut = () => this.backBtn.userData.targetScale.copy(this.backBtn.userData.originalScale);
@@ -163,6 +164,8 @@ export class PanoramaViewer {
         // Pause / Resume button
         const { mesh: pauseMesh, canvas: pauseCanvas } = makeBtn('pause');
         this.pauseBtn = pauseMesh;
+        this.pauseBtn.userData.label = 'Pause Button';
+        this.pauseBtn.userData.noReentryGuard = true;
         this._pauseBtnCanvas = pauseCanvas;
         this.pauseBtn.position.set(0, y, -1.6); // centre slot
         this.pauseBtn.lookAt(0, CONFIG.layout.menuY, 0);
@@ -173,6 +176,8 @@ export class PanoramaViewer {
         // Skip button
         const { mesh: skipMesh } = makeBtn('skip');
         this.skipBtn = skipMesh;
+        this.skipBtn.userData.label = 'Skip Button';
+        this.skipBtn.userData.noReentryGuard = true;
         this.skipBtn.position.set(0.3, y, -1.6); // right slot
         this.skipBtn.lookAt(0, CONFIG.layout.menuY, 0);
         this.skipBtn.onClick = () => { this._narrationController?.skip(); };
