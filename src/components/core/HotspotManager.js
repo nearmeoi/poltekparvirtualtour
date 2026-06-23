@@ -2,15 +2,19 @@ import * as THREE from 'three';
 import { CONFIG } from '../../config.js';
 
 export class HotspotManager {
-    constructor(scene, bus) {
-        this.scene = scene;
+    constructor(parent, bus) {
+        // `parent` is the Object3D the hotspot group attaches to. It MUST be the
+        // PanoramaViewer's group (not the bare scene): every interactable raycast
+        // (admin drag/select + normal gaze/click) traverses pv.group recursively,
+        // so hotspots have to live under it or they can never be hit.
+        this.parent = parent;
         this.bus = bus;
         this.hotspots = [];
         this.textureCache = new Map();
         this.textureLoader = new THREE.TextureLoader();
 
         this.group = new THREE.Group();
-        this.scene.add(this.group);
+        this.parent.add(this.group);
 
         bus.on('scene:change', ({ hotspots }) => {
             this.loadHotspots(hotspots);
@@ -388,6 +392,6 @@ export class HotspotManager {
         this.clearHotspots();
         this.textureCache.forEach(t => t.dispose());
         this.textureCache.clear();
-        this.scene.remove(this.group);
+        this.parent.remove(this.group);
     }
 }

@@ -66,7 +66,9 @@ export class PanoramaViewer {
         // Optional bus — use no-op shim when not provided (bus wired in Task 19)
         this.bus = bus || null;
         const _bus = bus || { on: () => {}, emit: () => {}, off: () => {} };
-        this.hotspotManager = new HotspotManager(scene, _bus);
+        // Attach hotspots under this.group (not the bare scene) so they're inside
+        // the interactable raycast tree — required for click/gaze nav + admin drag/select.
+        this.hotspotManager = new HotspotManager(this.group, _bus);
 
         // Initialize Hotspots Data
         this.hotspotsData = {};
