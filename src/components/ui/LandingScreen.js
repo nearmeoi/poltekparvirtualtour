@@ -70,12 +70,23 @@ export class LandingScreen {
                 this.app.vrButton.style.display =
                     (this.app.vrButton.id === 'vr-goggle-button') ? 'flex' : '';
             }
+
+            // Show the corner Settings button (flat panel opener)
+            if (this.app.settingsFab) this.app.settingsFab.style.display = 'flex';
         };
 
         if (btnStart) {
             btnStart.addEventListener('click', (e) => {
                 e.stopPropagation();
                 enterTour();
+            });
+        }
+
+        const btnSettings = document.getElementById('open-settings-btn');
+        if (btnSettings) {
+            btnSettings.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.app.settingsPanel?.open();
             });
         }
     }

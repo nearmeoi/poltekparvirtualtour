@@ -12,7 +12,7 @@ export class StereoEffect {
 
         // Stereo camera setup
         this.stereo = new THREE.StereoCamera();
-        this.stereo.eyeSep = 0.064; // Default IPD
+        this.stereo.eyeSep = CONFIG.vr.cardboardIPD; // IPD (tunable via Settings)
 
         // Store original renderer settings
         this._size = new THREE.Vector2();
@@ -97,7 +97,7 @@ export class StereoEffect {
             uniforms: {
                 tDiffuse: { value: null },
                 resolution: { value: new THREE.Vector2() },
-                distortion: { value: 0.12 },
+                distortion: { value: CONFIG.vr.lensDistortion },
                 exposure: { value: 2.5 } // Extreme boost (250% Brightness)
             },
 
@@ -134,6 +134,9 @@ export class StereoEffect {
 
     enable() {
         this.enabled = true;
+        // Pick up any values tuned via the Settings panel.
+        this.setEyeSeparation(CONFIG.vr.cardboardIPD);
+        this.setDistortion(CONFIG.vr.lensDistortion);
         // Clamp DPR: the stereo path renders the scene twice plus two post passes,
         // so unclamped device DPR (often 3 on budget phones) tanks fill-rate.
         const dpr = Math.min(window.devicePixelRatio || 1, CONFIG.vr.stereoMaxPixelRatio);

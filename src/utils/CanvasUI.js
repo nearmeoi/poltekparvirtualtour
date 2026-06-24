@@ -145,6 +145,28 @@ export const CanvasUI = {
             ctx.lineTo(hx + 2, hy + 12);
             ctx.closePath();
             ctx.fill();
+        } else if (icon === 'settings') {
+            // Three horizontal sliders with knobs (the universal "settings" glyph)
+            const lineW = 56, knobR = 9;
+            const rows = [cy - 24, cy, cy + 24];
+            const knobX = [cx + 10, cx - 14, cx + 18];
+            ctx.lineWidth = 7;
+            rows.forEach((ry, i) => {
+                ctx.beginPath();
+                ctx.moveTo(cx - lineW / 2, ry);
+                ctx.lineTo(cx + lineW / 2, ry);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(knobX[i], ry, knobR, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        } else if (icon === 'close') {
+            ctx.lineWidth = 12;
+            const d = 22;
+            ctx.beginPath();
+            ctx.moveTo(cx - d, cy - d); ctx.lineTo(cx + d, cy + d);
+            ctx.moveTo(cx + d, cy - d); ctx.lineTo(cx - d, cy + d);
+            ctx.stroke();
         }
 
         return canvas;

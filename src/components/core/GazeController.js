@@ -24,7 +24,9 @@ export class GazeController {
         this.mesh = new THREE.Mesh(geometry, material);
         // Position will be updated in update() loop
         this.scene.add(this.mesh);
-        this.mesh.renderOrder = 10001; // Higher than hotspots (9999)
+        // Reticle must draw on top of EVERYTHING (hotspots 9999, settings panel 11000-11002).
+        // Both reticle materials use depthTest:false, so renderOrder alone decides layering.
+        this.mesh.renderOrder = 12000;
 
         // Progress indicator (Inner circle filling up)
         const progressGeo = new THREE.CircleGeometry(reticleSize * 1.5, 32);
@@ -35,7 +37,7 @@ export class GazeController {
             transparent: true
         });
         this.progressMesh = new THREE.Mesh(progressGeo, progressMat);
-        this.progressMesh.renderOrder = 10002;
+        this.progressMesh.renderOrder = 12001;
         this.progressMesh.scale.set(0, 0, 1);
         this.mesh.add(this.progressMesh);
 
@@ -73,6 +75,23 @@ export class GazeController {
         console.log('[GAZE] Setting interaction mode to:', mode);
         this.interactionMode = mode;
         this.clearHover();
+    }
+
+    // --- Live tuning (used by the Settings panel) ---
+    setReticleSize(size) {
+        this.mesh.geometry.dispose();
+        this.mesh.geometry = new THREE.CircleGeometry(size, 32);
+        this.progressMesh.geometry.dispose();
+        this.progressMesh.geometry = new THREE.CircleGeometry(size * 1.5, 32);
+    }
+
+    setReticleDistance(distance) {
+        this.reticleDistance = distance;
+    }
+
+    setDwellTime(seconds) {
+        this.baseActivationTime = seconds;
+        this.currentActivationTime = seconds;
     }
 
     _updateReticlePosition() {

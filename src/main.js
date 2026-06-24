@@ -45,6 +45,10 @@ import { NarrationController } from './components/narration/NarrationController.
 // VR Components
 import { VROverlay }           from './components/vr/VROverlay.js';
 import { CardboardModeManager } from './components/vr/CardboardModeManager.js';
+import { XRDiagnostics }       from './utils/XRDiagnostics.js';
+import { SettingsStore }       from './utils/SettingsStore.js';
+import { SettingsPanel }       from './components/ui/SettingsPanel.js';
+import { SettingsPanel3D }     from './components/ui/SettingsPanel3D.js';
 
 // UI Components
 import { LandingScreen } from './components/ui/LandingScreen.js';
@@ -80,6 +84,10 @@ class App {
         this.useCardboardFallback = false;
         this.cardboardManager     = null;
 
+        // Merge any saved user calibration into CONFIG BEFORE the scene is built,
+        // so the camera/reticle/sphere are created with the tuned values.
+        SettingsStore.load();
+
         // ── Initialization Sequence ─────────────────────────────────────────
         this.initRenderer();
         this.initCamera();
@@ -94,6 +102,9 @@ class App {
 
         // Input handler and landing screen run last (need all systems ready)
         this.inputHandler  = new InputHandler(this);
+        this.settingsPanel = new SettingsPanel(this);
+        this.settingsPanel3D = new SettingsPanel3D(this.scene, this.camera, (p, v) => this.applySetting(p, v));
+        this._createSettingsFab();
         this.landingScreen = new LandingScreen(this);
 
         // ── Render Loop ─────────────────────────────────────────────────────
@@ -168,23 +179,34 @@ class App {
     _setupBusListeners() {
         this.bus.on('vr:entered', ({ mode }) => {
             this.isVRMode = true;
+            this._showVRModeBadge(mode);
             if (this.panoramaViewer) {
                 this.panoramaViewer.setVRMode(true);
+                this.panoramaViewer.setSettingsButtonVisible(true); // gear opens in-VR calibration
                 if (this.panoramaViewer.currentPath && !this.panoramaViewer.group.visible) {
                     this.panoramaViewer.group.visible = true;
                 }
             }
             if (this.vrButton)    this.vrButton.style.display = 'none';
+            if (this.settingsFab) this.settingsFab.style.display = 'none'; // DOM hidden in immersive VR
         });
 
         this.bus.on('vr:exited', () => {
             this.isVRMode = false;
-            if (this.panoramaViewer) this.panoramaViewer.setVRMode(false);
+            if (this.panoramaViewer) {
+                this.panoramaViewer.setVRMode(false);
+                this.panoramaViewer.setSettingsButtonVisible(false);
+            }
+            this.settingsPanel3D?.hide();
             if (this.vrButton) {
                 this.vrButton.style.display =
                     (this.vrButton.id === 'vr-goggle-button') ? 'flex' : '';
             }
+            if (this.settingsFab) this.settingsFab.style.display = 'flex';
         });
+
+        // Gear button (control-dock) toggles the in-VR settings panel.
+        this.bus.on('ui:toggle-settings', () => this.settingsPanel3D?.toggle());
 
         // Navigation hotspots: jump to the linked scene when clicked/gazed.
         this.bus.on('hotspot:click', ({ data }) => {
@@ -240,6 +262,7 @@ class App {
     _setupWebXR() {
         this.renderer.xr.enabled = true;
         this.renderer.xr.setReferenceSpaceType('local');
+        this.xrDiag = new XRDiagnostics(this.renderer, () => this.panoramaViewer?.sphere);
         this.createVRButton();
 
         // Session start
@@ -248,12 +271,14 @@ class App {
             this.camera.fov = CONFIG.fov.vr;
             this.camera.updateProjectionMatrix();
             if (this.gyroscopeControls) this.gyroscopeControls.enabled = false;
+            this.xrDiag?.reset();
             this.bus.emit('vr:entered', { mode: 'webxr', isStereoscopic: true });
         });
 
         // Session end
         this.renderer.xr.addEventListener('sessionend', () => {
             console.log('WebXR session ended');
+            this.xrDiag?.showReport();
             this.camera.fov = CONFIG.fov.default;
             this.camera.updateProjectionMatrix();
             if (this.gyroscopeControls && this.isGyroEnabled) {
@@ -287,6 +312,58 @@ class App {
             }
         });
         this.scene.add(vrController);
+    }
+
+    /**
+     * Briefly shows which VR path actually started, so it's obvious on-device
+     * whether you're in native WebXR or the Cardboard fallback. Debug aid.
+     */
+    _showVRModeBadge(mode) {
+        const label = mode === 'webxr' ? 'NATIVE WEBXR' : (mode === 'cardboard' ? 'CARDBOARD (custom)' : String(mode));
+        let el = document.getElementById('vr-mode-badge');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'vr-mode-badge';
+            Object.assign(el.style, {
+                position: 'fixed', top: '8px', left: '50%', transform: 'translateX(-50%)',
+                zIndex: '100000', background: 'rgba(0,0,0,0.8)', color: '#0ff',
+                padding: '6px 14px', font: 'bold 14px/1 monospace',
+                border: '1px solid #0ff', borderRadius: '6px', pointerEvents: 'none'
+            });
+            document.body.appendChild(el);
+        }
+        el.textContent = `VR: ${label}`;
+        el.style.display = 'block';
+        clearTimeout(this._vrBadgeTimer);
+        this._vrBadgeTimer = setTimeout(() => { if (el) el.style.display = 'none'; }, 4000);
+    }
+
+    /**
+     * Floating corner gear button (shown after Start) that opens the flat
+     * settings panel on a normal screen. In immersive VR the DOM is hidden, so
+     * the in-VR 3D panel is opened by the control-dock gear instead.
+     */
+    _createSettingsFab() {
+        const btn = document.createElement('button');
+        btn.id = 'settings-fab';
+        btn.setAttribute('aria-label', 'Settings');
+        btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="26" height="26">
+                <path d="M19.14 12.94a7.49 7.49 0 0 0 .05-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.3 7.3 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.58.24-1.12.55-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L2.66 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.49 7.49 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.39 1.04.7 1.62.94l.36 2.54a.5.5 0 0 0 .5.42h3.84a.5.5 0 0 0 .5-.42l.36-2.54c.58-.24 1.12-.55 1.62-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/>
+            </svg>`;
+        Object.assign(btn.style, {
+            position: 'fixed', bottom: '84px', right: '25px',
+            width: '50px', height: '50px', borderRadius: '50%',
+            border: '2px solid rgba(255,255,255,0.8)', background: 'rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(4px)', cursor: 'pointer', display: 'none',
+            alignItems: 'center', justifyContent: 'center', zIndex: '9999'
+        });
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.settingsPanel3D?.toggle(); // same in-scene panel used in VR; click −/+ with mouse
+        });
+        document.body.appendChild(btn);
+        this.settingsFab = btn;
     }
 
     /** Creates the floating VR goggle button shown after the experience starts. */
@@ -532,10 +609,54 @@ class App {
      */
     getInteractables() {
         const list = [];
+        // The in-VR settings panel is MODAL: while open, only its controls are
+        // gaze-targets. Otherwise the gaze ray slips through the gaps between
+        // buttons and selects hotspots / menu cards sitting behind the panel.
+        if (this.settingsPanel3D?.visible) return [this.settingsPanel3D.group];
+
         if (this.panoramaViewer?.group?.visible) list.push(this.panoramaViewer.group);
         if (this.infoPanel3D?.group?.visible)    list.push(this.infoPanel3D.group);
         if (this.orbitalMenu?.group?.visible)    list.push(this.orbitalMenu.group);
         return list;
+    }
+
+    /**
+     * Persist a tuned setting and apply it to the live scene immediately.
+     * Called by SettingsPanel. Paths map to CONFIG dot-paths.
+     */
+    applySetting(path, value) {
+        SettingsStore.set(path, value); // updates CONFIG + localStorage
+
+        switch (path) {
+            case 'gaze.reticleSize':
+                this.gazeController?.setReticleSize(value);
+                break;
+            case 'gaze.reticleDistance':
+                this.gazeController?.setReticleDistance(value);
+                break;
+            case 'gaze.activationTime':
+                this.gazeController?.setDwellTime(value);
+                break;
+            case 'panorama.sphereRadius':
+                this.panoramaViewer?.setSphereRadius(value);
+                break;
+            case 'narration.subtitleScale':
+                this.narrationController?.setSubtitleScale(value);
+                break;
+            case 'vr.cardboardIPD':
+                this.cardboardManager?.stereoEffect?.setEyeSeparation(value);
+                break;
+            case 'vr.lensDistortion':
+                this.cardboardManager?.stereoEffect?.setDistortion(value);
+                break;
+            case 'fov.vr':
+                // Applied on the next VR entry; if already in cardboard VR, apply now.
+                if (this.cardboardManager?.isCardboardMode) {
+                    this.camera.fov = value;
+                    this.camera.updateProjectionMatrix();
+                }
+                break;
+        }
     }
 
     // ======================== RENDER LOOP ========================
@@ -565,9 +686,13 @@ class App {
         this.narrationController?.update(delta);
         this.panoramaViewer?.update(delta);
         this.infoPanel3D?.update(delta);
+        this.settingsPanel3D?.update(delta);
         if (this.orbitalMenu?.group.visible) {
             this.orbitalMenu.update(delta);
         }
+
+        // XR stereo diagnostics (native WebXR only; no-op unless presenting)
+        this.xrDiag?.capture();
 
         // Render — use Cardboard stereo if in cardboard mode, otherwise normal
         if (this.cardboardManager?.render(this.scene, this.camera)) {

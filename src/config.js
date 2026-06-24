@@ -44,6 +44,7 @@ export const CONFIG = {
         subtitleY: -0.5,         // meters below camera.position.y
         subtitleWidth: 1.8,      // panel width in world units
         subtitleHeight: 0.25,    // panel height in world units
+        subtitleScale: 1.0,      // overall subtitle size multiplier (tunable in Settings)
     },
 
     // Menu Settings
@@ -115,6 +116,7 @@ export const CONFIG = {
     // VR Settings
     vr: {
         cardboardIPD: 0.065,
+        lensDistortion: 0.12,   // Cardboard barrel-distortion strength (StereoEffect)
         // Stereo path is the heaviest (2 scene renders + 2 post passes per frame).
         // Clamp DPR and MSAA here so budget phones don't tank FPS / overheat.
         stereoMaxPixelRatio: 2,

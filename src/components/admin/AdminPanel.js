@@ -1,6 +1,5 @@
 import { SCENE_MAP } from '../../data/sceneMap.js';
-import { API_BASE } from '../../config.js';
-import SCENE_LIST from '../../data/scene_list.json';
+import SCENES_MANIFEST from '../../data/scenesManifest.json';
 import { AdminStateManager } from './AdminStateManager.js';
 import { AdminPersistence }  from './AdminPersistence.js';
 
@@ -11,7 +10,12 @@ export class AdminPanel {
         this.selectedHotspot = null;
         this.unsavedChanges = false;
         this.sceneId = null;
-        this.availableScenes = SCENE_LIST || [];
+        // Offline scene catalog: every scene across ALL locations, flattened
+        // from scenesManifest.json (regenerate via scripts/generate-scenes-manifest.mjs).
+        this.locations = SCENES_MANIFEST || [];
+        this.availableScenes = this.locations.flatMap(
+            loc => loc.scenes.map(s => ({ filename: s.filename, path: s.path, location: loc.location }))
+        );
         this.filteredScenes = this.availableScenes;
         this.useCustomPath = false;
         this.stateManager = new AdminStateManager(null);
@@ -515,6 +519,7 @@ export class AdminPanel {
                 this.viewer.removeHotspot(hotspot);
                 this.selectedHotspot = null;
                 this.renderForm(null);
+                this.renderSceneInfo(); // sync count after delete
                 this.markDirty();
             }
         };
@@ -734,19 +739,27 @@ export class AdminPanel {
             noTargetOpt.style.color = '#6b7280';
             select.appendChild(noTargetOpt);
 
-            const filtered = this.availableScenes.filter(s =>
-                s.filename.toLowerCase().includes(filter.toLowerCase())
-            );
+            // Group options by location so every location is visible/selectable.
+            const q = filter.toLowerCase();
+            for (const loc of this.locations) {
+                const matches = loc.scenes.filter(s =>
+                    s.filename.toLowerCase().includes(q) || loc.location.toLowerCase().includes(q)
+                );
+                if (!matches.length) continue;
 
-            filtered.forEach(scene => {
-                const opt = document.createElement('option');
-                opt.value = scene.path;
-                opt.textContent = scene.filename;
-                opt.style.padding = '8px 10px';
-                opt.style.background = '#ffffff';
-                if (scene.path === hotspot.target) opt.selected = true;
-                select.appendChild(opt);
-            });
+                const grp = document.createElement('optgroup');
+                grp.label = `${loc.location} (${matches.length})`;
+                matches.forEach(scene => {
+                    const opt = document.createElement('option');
+                    opt.value = scene.path;
+                    opt.textContent = scene.filename;
+                    opt.style.padding = '8px 10px';
+                    opt.style.background = '#ffffff';
+                    if (scene.path === hotspot.target) opt.selected = true;
+                    grp.appendChild(opt);
+                });
+                select.appendChild(grp);
+            }
         };
 
         searchInput.oninput = (e) => updateOptions(e.target.value);
@@ -839,6 +852,7 @@ export class AdminPanel {
     selectHotspot(hotspot) {
         this.selectedHotspot = hotspot;
         this.renderForm(hotspot);
+        this.renderSceneInfo(); // keep hotspot count in sync after add/select
     }
 
     openInfoCustomizer(hotspot) {
@@ -1080,6 +1094,23 @@ export class AdminPanel {
         this.unsavedChanges = true;
         this.saveBtn.style.background = '#10b981';
         this.saveBtn.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.4)';
+        // Auto-save: persist to localStorage shortly after the last edit, so the
+        // admin never clicks Save or reloads. Debounced to coalesce rapid edits.
+        clearTimeout(this._autosaveTimer);
+        this._autosaveTimer = setTimeout(() => this._autosave(), 400);
+    }
+
+    /** Persist the current scene's hotspots to localStorage (offline) + reflect state. */
+    _autosave() {
+        const payload = this.viewer.getCurrentSceneHotspots();
+        if (!payload) return;
+        AdminPersistence.saveHotspots(payload.sceneId, payload.hotspots);
+        this.unsavedChanges = false;
+        this.saveBtn.style.boxShadow = 'none';
+        this.saveBtn.textContent = 'Saved ✓';
+        this.renderSceneInfo();
+        clearTimeout(this._savedLabelTimer);
+        this._savedLabelTimer = setTimeout(() => { this.saveBtn.textContent = 'Save'; }, 1200);
     }
 
     async saveToDisk() {
@@ -1098,26 +1129,19 @@ export class AdminPanel {
             this.saveBtn.disabled = true;
             this.saveBtn.textContent = 'Saving...';
 
-            const response = await fetch(`${API_BASE}/api/save-hotspots`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            // Offline: persist straight to localStorage (the API is gone).
+            AdminPersistence.saveHotspots(payload.sceneId, payload.hotspots);
 
-            if (response.ok) {
-                this.unsavedChanges = false;
-                this.saveBtn.style.boxShadow = 'none';
-                this.saveBtn.textContent = 'Saved!';
-                AdminPersistence.saveHotspots(payload.sceneId, payload.hotspots);
-                this.showToast('Changes saved to disk');
+            this.unsavedChanges = false;
+            this.saveBtn.style.boxShadow = 'none';
+            this.saveBtn.textContent = 'Saved!';
+            this.renderSceneInfo();              // keep the hotspot count in sync
+            this.showToast('Saved (offline)');
 
-                setTimeout(() => {
-                    this.saveBtn.textContent = 'Save';
-                    this.saveBtn.disabled = false;
-                }, 2000);
-            } else {
-                throw new Error('Save failed');
-            }
+            setTimeout(() => {
+                this.saveBtn.textContent = 'Save';
+                this.saveBtn.disabled = false;
+            }, 1500);
         } catch (err) {
             console.error(err);
             this.saveBtn.textContent = 'Error!';

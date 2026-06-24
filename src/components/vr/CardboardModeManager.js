@@ -129,14 +129,17 @@ export class CardboardModeManager {
             this.stereoEffect.enable();
         }
 
-        // Request fullscreen
-        // Use iOS video hack for iPhone/iPad, standard API for others
+        // Request fullscreen — BEST-EFFORT ONLY. requestFullscreen() can hang
+        // indefinitely (or reject) in some browsers/embeds without ever resolving;
+        // awaiting it previously stalled VR entry so the stereo split never started.
+        // Fire it without blocking the rest of entry (same approach as LandingScreen).
         if (isIOS() && this.iOSFullscreen) {
             console.log('Using iOS video fullscreen hack...');
-            const success = await this.iOSFullscreen.enterFullscreen();
-            console.log('iOS fullscreen result:', success);
+            this.iOSFullscreen.enterFullscreen()
+                .then((success) => console.log('iOS fullscreen result:', success))
+                .catch((e) => console.warn('iOS fullscreen failed (continuing):', e));
         } else {
-            await FullscreenHelper.request();
+            FullscreenHelper.request().catch((e) => console.warn('Fullscreen failed (continuing):', e));
         }
 
         // Set VR FOV

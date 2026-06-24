@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TOUR_DATA } from '../../data/tourData.js'; // Import data for reference if needed
 import { CanvasUI } from '../../utils/CanvasUI.js';
 import { AudioControls } from '../ui/AudioControls.js';
-import { CONFIG, API_BASE } from '../../config.js';
+import { CONFIG } from '../../config.js';
 // import HOTSPOTS_DATA from '../../data/hotspots.json'; // Removed static import
 import { SCENE_MAP } from '../../data/sceneMap.js';
 import { HotspotManager } from './HotspotManager.js';
@@ -53,6 +53,7 @@ export class PanoramaViewer {
 
         this.createBackButton();
         this.createNarrationButtons();
+        this.createSettingsButton();
         this.audioControls = new AudioControls(this.controlDock);
         this.audioControls.setVisible(false); // Hide legacy buttons (we use Unified Dock now)
         this.createLoadingIndicator();
@@ -83,26 +84,12 @@ export class PanoramaViewer {
         this.infoPanel3D = panel;
     }
 
-    async fetchHotspots() {
-        try {
-            const res = await fetch(`${API_BASE}/api/get-hotspots`);
-            if (res.ok) {
-                this.hotspotsData = await res.json();
-                console.log('Hotspots loaded dynamically:', Object.keys(this.hotspotsData).length, ' entries');
-
-                // If we already loaded a scene, refresh hotspots now that we have data
-                if (this.currentPath) {
-                    console.log('Refreshing hotspots for current path:', this.currentPath);
-                    this.checkAndLoadHotspots(this.currentPath);
-                }
-            } else {
-                console.warn('Failed to fetch hotspots, using empty object.');
-                this.hotspotsData = {};
-            }
-        } catch (err) {
-            console.error('Error fetching hotspots:', err);
-            this.hotspotsData = {};
-        }
+    fetchHotspots() {
+        // Offline: hotspots live in localStorage (`hotspots_<scenePath>`), written
+        // by the admin panel — no backend. checkAndLoadHotspots reads localStorage
+        // per scene directly, so just (re)load the current scene's hotspots here.
+        this.hotspotsData = {};
+        if (this.currentPath) this.checkAndLoadHotspots(this.currentPath);
     }
 
     createBackButton() {
@@ -192,6 +179,31 @@ export class PanoramaViewer {
         this.controlDock.add(this.skipBtn);
 
         this._narrationPaused = false;
+    }
+
+    /** Gear button on the control-dock that opens the in-VR settings panel. */
+    createSettingsButton() {
+        const canvas = CanvasUI.createIconButtonTexture('settings', { width: 200, height: 180, radius: 40 });
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
+        this.settingsBtn = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.18), material);
+        this.settingsBtn.position.set(0.6, CONFIG.layout.backButtonOffsetY, -1.6); // right of the skip slot
+        this.settingsBtn.lookAt(0, CONFIG.layout.menuY, 0);
+        this.settingsBtn.userData.isInteractable = true;
+        this.settingsBtn.userData.originalScale = new THREE.Vector3(1, 1, 1);
+        this.settingsBtn.userData.targetScale = new THREE.Vector3(1, 1, 1);
+        this.settingsBtn.userData.animProgress = 1;
+        this.settingsBtn.userData.label = 'Settings Button';
+        this.settingsBtn.userData.noReentryGuard = true;
+        this.settingsBtn.onHoverIn = () => this.settingsBtn.userData.targetScale.set(1.1, 1.1, 1.1);
+        this.settingsBtn.onHoverOut = () => this.settingsBtn.userData.targetScale.copy(this.settingsBtn.userData.originalScale);
+        this.settingsBtn.onClick = () => this.bus?.emit('ui:toggle-settings');
+        this.settingsBtn.visible = false;
+        this.controlDock.add(this.settingsBtn);
+    }
+
+    setSettingsButtonVisible(visible) {
+        if (this.settingsBtn) this.settingsBtn.visible = visible;
     }
 
     setNarrationController(controller) {
@@ -562,15 +574,17 @@ export class PanoramaViewer {
     }
 
     checkAndLoadHotspots(path) {
-        // Now that HOTSPOTS_DATA is keyed by Path, we can look up directly.
-        // Incoming path might be absolute or relative. We should standardize.
-        // Our keys are like "assets/Museum Kota Makassar/file.jpg".
+        // Offline source of truth: per-scene hotspots saved by the admin in
+        // localStorage (`hotspots_<path>`). Read it fresh so edits show on
+        // re-entry without a reload.
+        let hotspots = null;
+        try {
+            const raw = localStorage.getItem(`hotspots_${path}`);
+            if (raw) hotspots = JSON.parse(raw);
+        } catch { /* ignore corrupt entry */ }
 
-        // Try to find exact match or partial match
-        // 1. Direct match
-        let hotspots = this.hotspotsData[path];
-
-        // 2. If not found, try to find a key that is contained in the path
+        // Fallback to any bundled data (exact, then fuzzy match).
+        if (!hotspots) hotspots = this.hotspotsData[path];
         if (!hotspots) {
             const key = Object.keys(this.hotspotsData).find(k => path.includes(k) || k.includes(path));
             if (key) hotspots = this.hotspotsData[key];
@@ -600,6 +614,18 @@ export class PanoramaViewer {
         } else {
             console.log(`No hotspots found for path: ${path}`);
         }
+    }
+
+    /**
+     * Live-adjust the apparent panorama distance by scaling the sphere.
+     * Used by the Settings panel; built radius is read from the geometry so
+     * repeated calls stay absolute, not cumulative.
+     */
+    setSphereRadius(radius) {
+        if (!this.sphere) return;
+        const built = this.sphere.geometry?.parameters?.radius || CONFIG.panorama.sphereRadius;
+        const s = radius / built;
+        this.sphere.scale.setScalar(s);
     }
 
     setAdminMode(isActive) {
@@ -699,9 +725,10 @@ export class PanoramaViewer {
             this.hotspotManager.group.add(mesh);
             this.hotspotManager.hotspots.push(mesh);
 
-            // Select it immediately
+            // Select it immediately + mark dirty so it auto-saves
             if (window.adminPanel) {
                 window.adminPanel.selectHotspot(mesh.userData.hotspotData);
+                window.adminPanel.markDirty();
             }
         }
     }

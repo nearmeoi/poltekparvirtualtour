@@ -84,6 +84,11 @@ export class NarrationController {
         return this._audio !== null;
     }
 
+    /** Live-adjust the subtitle panel size (used by the Settings panel). */
+    setSubtitleScale(scale) {
+        this._subtitlePanel.setScale(scale);
+    }
+
     /** Restart this scene's narration from the beginning. */
     replay() {
         if (this._lastSceneData?.audio) this._loadScene(this._lastSceneData);

@@ -9,6 +9,7 @@
 
 @import './base.css';
 @import './landing.css';
+@import './settings.css';
 @import './onboarding.css';
 @import './vr-hud.css';
 @import './vr-overlay.css';

@@ -54,7 +54,13 @@ export class SubtitlePanel3D {
             this.material
         );
         this.mesh.renderOrder = 9990;
+        this.mesh.scale.setScalar(CONFIG.narration.subtitleScale || 1);
         this.group.add(this.mesh);
+    }
+
+    /** Live size multiplier for the whole subtitle (box + text). */
+    setScale(scale) {
+        this.mesh.scale.setScalar(scale || 1);
     }
 
     /**
