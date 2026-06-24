@@ -4,8 +4,8 @@ dist/
 *.log
 .DS_Store
 
-# Large 360 panorama source media (too big for GitHub; hosted/served separately)
-public/assets/*/Media/
+# Optimized 360 panoramas (public/assets/*/Media/) ARE committed — they're the
+# web-sized copies (~5MB each) produced by scripts/optimize-panoramas.mjs.
 
-# Local source backups (not committed)
+# Local source backups / full-res originals (not committed)
 _backup/
