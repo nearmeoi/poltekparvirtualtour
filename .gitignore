@@ -6,3 +6,6 @@ dist/
 
 # Large 360 panorama source media (too big for GitHub; hosted/served separately)
 public/assets/*/Media/
+
+# Local source backups (not committed)
+_backup/
