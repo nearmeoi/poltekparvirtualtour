@@ -49,7 +49,7 @@ export class AdminPanel {
             position: 'absolute',
             top: '10px',
             right: '10px',
-            width: '260px',
+            width: '300px',
             maxHeight: 'calc(100vh - 20px)',
             overflowY: 'auto',
             overflowX: 'hidden',
@@ -163,6 +163,14 @@ export class AdminPanel {
         });
         content.appendChild(this.sceneInfo);
 
+        this.chipRow = document.createElement('div');
+        Object.assign(this.chipRow.style, {
+            display: 'flex', gap: '6px', flexWrap: 'wrap',
+            padding: '8px 0', borderBottom: '1px solid #eee',
+            marginBottom: '8px',
+        });
+        content.appendChild(this.chipRow);
+
         this.form = document.createElement('div');
         content.appendChild(this.form);
 
@@ -253,6 +261,29 @@ export class AdminPanel {
                 ${filename}
             </div>
         `;
+        this.renderHotspotChips();
+    }
+
+    /** Render a compact clickable chip per hotspot in the current scene. */
+    renderHotspotChips() {
+        if (!this.chipRow) return;
+        this.chipRow.innerHTML = '';
+        const payload = this.viewer.getCurrentSceneHotspots?.();
+        const hotspots = payload?.hotspots || [];
+        hotspots.forEach((hs) => {
+            const chip = document.createElement('button');
+            chip.textContent = hs.label || hs.type || 'hotspot';
+            const active = this.selectedHotspot === hs;
+            Object.assign(chip.style, {
+                fontSize: '11px', padding: '3px 9px', borderRadius: '999px', cursor: 'pointer',
+                border: active ? '1px solid #4f46e5' : '0.5px solid #d1d5db',
+                background: active ? '#eef2ff' : '#f9fafb',
+                color: active ? '#4f46e5' : '#4b5563',
+                whiteSpace: 'nowrap', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis',
+            });
+            chip.onclick = () => { this.selectHotspot(hs); };
+            this.chipRow.appendChild(chip);
+        });
     }
 
     renderForm(hotspot) {
@@ -317,12 +348,12 @@ export class AdminPanel {
             this.markDirty();
         }));
 
-        // Layout with two rows for Size and Text Size (vertical stacking to avoid overflow)
+        // Layout with three rows for Size, Text Size, and Label Offset (vertical stacking to avoid overflow)
         const sizesGrid = document.createElement('div');
         Object.assign(sizesGrid.style, {
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px'
+            gap: '8px'
         });
 
         // Icon Size
@@ -345,15 +376,29 @@ export class AdminPanel {
         }));
         sizesGrid.appendChild(textSizeCol);
 
-        this.form.appendChild(sizesGrid);
-
-        // Label Offset
-        this.form.appendChild(this.createLabel('Label Offset'));
-        this.form.appendChild(this.createSlider(hotspot.labelOffset !== undefined ? hotspot.labelOffset : 0, -5, 10, 0.5, (val) => {
+        // Label Offset (moved into sizesGrid for compact trio)
+        const offsetCol = document.createElement('div');
+        offsetCol.appendChild(this.createLabel('Label Offset'));
+        offsetCol.appendChild(this.createSlider(hotspot.labelOffset !== undefined ? hotspot.labelOffset : 0, -5, 10, 0.5, (val) => {
             hotspot.labelOffset = parseFloat(val);
             this.viewer.refreshHotspot?.(hotspot);
             this.markDirty();
         }));
+        sizesGrid.appendChild(offsetCol);
+
+        this.form.appendChild(sizesGrid);
+
+        // Color
+        this.form.appendChild(this.createLabel('Color'));
+        this.form.appendChild(this.createColorPicker(hotspot));
+
+        // Advanced (collapsed): wrap toggle + custom icon URL + preview
+        const adv = document.createElement('details');
+        adv.style.marginTop = '12px';
+        const advSummary = document.createElement('summary');
+        advSummary.textContent = 'Advanced';
+        Object.assign(advSummary.style, { fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#6b7280', fontWeight: '600', cursor: 'pointer', marginBottom: '8px' });
+        adv.appendChild(advSummary);
 
         // Label Wrap Toggle
         const wrapRow = document.createElement('div');
@@ -390,14 +435,8 @@ export class AdminPanel {
         });
         wrapRow.appendChild(wrapCheckbox);
         wrapRow.appendChild(wrapLabel);
-        this.form.appendChild(wrapRow);
-
-        // Color
-        this.form.appendChild(this.createLabel('Color'));
-        this.form.appendChild(this.createColorPicker(hotspot));
 
         // Custom Icon URL
-        this.form.appendChild(this.createLabel('Custom Icon URL'));
         const iconInput = this.createInput(hotspot.icon_url, (val) => {
             hotspot.icon_url = val;
             this.viewer.refreshHotspot?.(hotspot);
@@ -407,7 +446,6 @@ export class AdminPanel {
             iconPreviewWrapper.style.display = val ? 'block' : 'none';
         });
         iconInput.placeholder = 'https://example.com/icon.png';
-        this.form.appendChild(iconInput);
 
         // Icon Preview
         const iconPreviewWrapper = document.createElement('div');
@@ -428,7 +466,12 @@ export class AdminPanel {
         });
         iconPreview.src = hotspot.icon_url || '';
         iconPreviewWrapper.appendChild(iconPreview);
-        this.form.appendChild(iconPreviewWrapper);
+
+        adv.appendChild(wrapRow);
+        adv.appendChild(this.createLabel('Custom Icon URL'));
+        adv.appendChild(iconInput);
+        adv.appendChild(iconPreviewWrapper);
+        this.form.appendChild(adv);
 
         if (hotspot.type === 'info' || hotspot.type === 'photo') {
             const editBtn = this.createButton('Edit Content & Style', '#4f46e5', () => {
@@ -538,6 +581,7 @@ export class AdminPanel {
                 this.selectedHotspot = null;
                 this.renderForm(null);
                 this.renderSceneInfo(); // sync count after delete
+                this.renderHotspotChips();
                 this.markDirty();
             }
         };
@@ -806,6 +850,7 @@ export class AdminPanel {
         this.selectedHotspot = hotspot;
         this.renderForm(hotspot);
         this.renderSceneInfo(); // keep hotspot count in sync after add/select
+        this.renderHotspotChips();
     }
 
     openInfoCustomizer(hotspot) {
