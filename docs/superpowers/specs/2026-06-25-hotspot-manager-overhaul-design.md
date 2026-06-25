@@ -112,17 +112,43 @@ an OS file dropzone that POSTs to `/__admin/upload`, then `SceneCatalog.refresh(
 and re-renders.
 
 **5. Compact `HotspotForm` / editor layout** — restructure the editor panel
-(per the approved mockup):
-- Header: scene filename + location + hotspot count + auto-save indicator
-  (`✓ saved`) + close.
-- Chip row: every hotspot in the scene as a small clickable chip (select/jump),
-  plus an `+ add` affordance; replaces hunting in 3D.
-- Compact form for the selected hotspot: label input; type select; **Target as a
-  button** that opens `ScenePicker` (replaces the inline 264-option `<select>`);
-  Size/Text/Offset as a tight 3-row `label · slider · value` grid; color as a
-  compact swatch row; `Wrap label` checkbox; `Advanced` (custom icon URL) collapsed
-  by default; delete button.
-- Footer: "right-click panorama to add · auto-saves".
+(per the approved mockup). This is a **layout/density** change only: **every
+existing control is preserved**, just arranged compactly. Header: scene filename +
+location + hotspot count + auto-save indicator (`✓ saved`) + close. Chip row: every
+hotspot in the scene as a small clickable chip (select/jump) + `+ add`; replaces
+hunting in 3D. Footer: "right-click panorama to add · auto-saves".
+
+**Full field inventory (none may be dropped):**
+
+| Field | Control | hotspot prop / action |
+|---|---|---|
+| Coordinates | read-only mono `yaw° / pitch°` | `yaw`, `pitch` |
+| Label | text input | `label` (+ syncs legacy `target_name`) |
+| Type | select: Navigation (Pin) / Information / Photo / Video / Home | `type` |
+| Icon Size | slider 1–6, step 0.5 | `size` |
+| Text Size | slider 0.5–2.5, step 0.1 | `textSize` |
+| Label Offset | slider −5–10, step 0.5 | `labelOffset` |
+| Wrap Long Label | checkbox | `labelWrap` |
+| Color | compact swatch row (color picker) | `color` |
+| Custom Icon URL | text input + image preview | `icon_url` |
+| **Target** (type = arrow/home/video) | **button → `ScenePicker`**, with a **Custom Path** toggle for manual `assets/...` path entry | `target` |
+| **Content** (type = info/photo) | "Edit Content & Style" button → existing `openInfoCustomizer`; photo also shows a Quick Photo URL input | info content/style; `target` |
+| Delete | button (confirm) | removes hotspot |
+
+**Compact arrangement of the above:**
+- Sizing trio (Icon Size / Text Size / Label Offset) → one tight 3-row
+  `label · slider · value` grid (was three stacked blocks).
+- Color → single swatch row.
+- `Wrap Long Label` + `Custom Icon URL` + preview → grouped under a collapsible
+  **Advanced** section (collapsed by default) to shorten the panel.
+- The **type-conditional area** stays: nav types show the Target button
+  (+ Custom Path toggle); info/photo show the "Edit Content & Style" button (and
+  Quick Photo URL for photo). The `ScenePicker` thumbnail popover **replaces only
+  the 264-option `<select>`** (`createSceneSelector`); the Custom Path manual-input
+  fallback is kept.
+- `openInfoCustomizer` (the rich info/photo content+style editor) is **preserved
+  unchanged** — only its launch button moves into the compact layout.
+
 Field edits update in place and call the existing `markDirty()` (debounced
 auto-save) — no full `renderForm` rebuild on each keystroke.
 
