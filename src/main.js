@@ -676,9 +676,10 @@ class App {
             this.controls.update();
         }
 
-        // Gaze controller (handles dwell-to-click reticle)
-        const interactables = this.getInteractables();
-        if (this.gazeController) {
+        // Gaze controller (handles dwell-to-click reticle). Skipped in admin mode:
+        // editing is mouse-driven, so the per-frame raycast is pure overhead there.
+        if (this.gazeController && !this.panoramaViewer?.isAdminMode) {
+            const interactables = this.getInteractables();
             this.gazeController.update(this.scene, interactables, delta);
         }
 
