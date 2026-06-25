@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { adminFsPlugin } from './vite-plugins/admin-fs.js';
 
 export default defineConfig({
     server: {
@@ -11,5 +12,5 @@ export default defineConfig({
             ignored: ['**/hotspots.json']
         }
     },
-    plugins: []
+    plugins: [adminFsPlugin()]
 });
