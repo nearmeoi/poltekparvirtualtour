@@ -2,6 +2,8 @@ import { SCENE_MAP } from '../../data/sceneMap.js';
 import SCENES_MANIFEST from '../../data/scenesManifest.json';
 import { AdminStateManager } from './AdminStateManager.js';
 import { AdminPersistence }  from './AdminPersistence.js';
+import { SceneCatalog } from '../../utils/SceneCatalog.js';
+import { ScenePicker } from './ScenePicker.js';
 
 export class AdminPanel {
     constructor(viewer) {
@@ -17,6 +19,7 @@ export class AdminPanel {
             loc => loc.scenes.map(s => ({ filename: s.filename, path: s.path, location: loc.location }))
         );
         this.filteredScenes = this.availableScenes;
+        this.scenePicker = new ScenePicker();
         this.useCustomPath = false;
         this.stateManager = new AdminStateManager(null);
         this.stateManager.push(null); // sentinel so canUndo() is true after first command
@@ -491,7 +494,22 @@ export class AdminPanel {
                 pathInput.placeholder = 'assets/folder/scene.jpg';
                 this.form.appendChild(pathInput);
             } else {
-                this.form.appendChild(this.createSceneSelector(hotspot));
+                const pickBtn = this.createButton(
+                    hotspot.target ? `→ ${hotspot.target.split('/').pop()}` : 'Choose target scene…',
+                    '#4f46e5',
+                    () => {
+                        this.scenePicker.open({
+                            location: this.currentLocationName(),
+                            onSelect: (path) => {
+                                hotspot.target = path;
+                                this.markDirty();
+                                this.renderForm(hotspot);
+                            },
+                        });
+                    }
+                );
+                pickBtn.style.width = '100%';
+                this.form.appendChild(pickBtn);
             }
         }
 
@@ -694,85 +712,19 @@ export class AdminPanel {
         return wrapper;
     }
 
-    createSceneSelector(hotspot) {
-        const wrapper = document.createElement('div');
+    /** Pull the live scene catalog (dev) so renames/adds show up without a script. */
+    async refreshCatalog() {
+        const locations = await SceneCatalog.getLocations();
+        this.locations = locations;
+        this.availableScenes = SceneCatalog.flat();
+        this.filteredScenes = this.availableScenes;
+    }
 
-        const searchInput = document.createElement('input');
-        searchInput.placeholder = 'Search...';
-        Object.assign(searchInput.style, {
-            width: '100%',
-            padding: '10px 12px',
-            background: '#ffffff',
-            border: '1px solid #d1d5db',
-            borderRadius: '6px 6px 0 0',
-            color: '#111827',
-            fontSize: '13px',
-            boxSizing: 'border-box',
-            outline: 'none',
-            borderBottom: 'none',
-            fontFamily: "'Roboto', sans-serif"
-        });
-
-        const select = document.createElement('select');
-        select.size = 5;
-        Object.assign(select.style, {
-            width: '100%',
-            background: '#ffffff',
-            border: '1px solid #d1d5db',
-            borderRadius: '0 0 6px 6px',
-            color: '#111827',
-            fontSize: '12px',
-            cursor: 'pointer',
-            boxSizing: 'border-box',
-            outline: 'none',
-            fontFamily: "'Roboto', sans-serif"
-        });
-
-        const updateOptions = (filter = '') => {
-            select.innerHTML = '';
-
-            const noTargetOpt = document.createElement('option');
-            noTargetOpt.value = '';
-            noTargetOpt.textContent = '(none)';
-            noTargetOpt.style.padding = '8px 10px';
-            noTargetOpt.style.background = '#ffffff';
-            noTargetOpt.style.color = '#6b7280';
-            select.appendChild(noTargetOpt);
-
-            // Group options by location so every location is visible/selectable.
-            const q = filter.toLowerCase();
-            for (const loc of this.locations) {
-                const matches = loc.scenes.filter(s =>
-                    s.filename.toLowerCase().includes(q) || loc.location.toLowerCase().includes(q)
-                );
-                if (!matches.length) continue;
-
-                const grp = document.createElement('optgroup');
-                grp.label = `${loc.location} (${matches.length})`;
-                matches.forEach(scene => {
-                    const opt = document.createElement('option');
-                    opt.value = scene.path;
-                    opt.textContent = scene.filename;
-                    opt.style.padding = '8px 10px';
-                    opt.style.background = '#ffffff';
-                    if (scene.path === hotspot.target) opt.selected = true;
-                    grp.appendChild(opt);
-                });
-                select.appendChild(grp);
-            }
-        };
-
-        searchInput.oninput = (e) => updateOptions(e.target.value);
-        select.onchange = (e) => {
-            hotspot.target = e.target.value;
-            this.markDirty();
-        };
-
-        updateOptions();
-
-        wrapper.appendChild(searchInput);
-        wrapper.appendChild(select);
-        return wrapper;
+    /** Best-guess location folder for the current scene (for upload target). */
+    currentLocationName() {
+        const path = this.viewer.currentPath || '';
+        const m = path.match(/assets\/([^/]+)\/Media\//);
+        return m ? m[1] : null;
     }
 
     setupKeyboardShortcuts() {
@@ -845,6 +797,7 @@ export class AdminPanel {
         this.viewer.setAdminMode(this.isAdminMode);
 
         if (this.isAdminMode) {
+            this.refreshCatalog();
             this.renderSceneInfo();
         }
     }
