@@ -85,6 +85,16 @@ The admin system is split across:
 - `AdminStateManager` — undo/redo stack
 - `AdminPersistence` — localStorage read/write + JSON export/import
 
+**Scene catalog (dev vs prod):** In dev, the admin reads a LIVE folder listing
+from the `admin-fs` Vite plugin (`vite-plugins/admin-fs.js`, `GET /__admin/scenes`),
+so renaming/adding/deleting a photo in `public/assets/<location>/Media/` shows up
+immediately (use the ScenePicker's refresh). The committed
+`src/data/scenesManifest.json` (built by `scripts/generate-scenes-manifest.mjs`)
+is the production/offline fallback. Thumbnails for the picker live in
+`Media/.thumbs/` — regenerate with `node scripts/generate-thumbs.mjs`. Dropping a
+photo onto the ScenePicker uploads it (dev only) via `POST /__admin/upload`, which
+optimizes it to ~8192px and makes a thumbnail.
+
 ### Key Utilities
 
 - `src/utils/deviceDetection.js` — `isIOS()`, `isAndroid()`, `isMobile()`, `hasGyroscope()`, `isCardboardForced()`. **Always use these instead of raw UA sniffing.**
