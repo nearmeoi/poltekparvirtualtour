@@ -76,7 +76,7 @@ export class ScenePicker {
 
     _renderGrid() {
         const q = this.search.value.trim().toLowerCase();
-        const locations = SceneCatalog._locations || [];
+        const locations = SceneCatalog.locations;
         this.grid.innerHTML = '';
 
         const noneBtn = document.createElement('button');

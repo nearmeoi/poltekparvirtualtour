@@ -34,6 +34,9 @@ class SceneCatalogImpl {
         return this._locations;
     }
 
+    /** Public read-only accessor for the cached locations array. */
+    get locations() { return this._locations || []; }
+
     /** Flatten every scene across locations (adds `location` to each scene). */
     flat() {
         return (this._locations || []).flatMap(

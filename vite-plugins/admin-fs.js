@@ -65,10 +65,14 @@ export function adminFsPlugin() {
                             const tmp = join(mediaDir, `.upload-tmp-${name}`);
                             writeFileSync(tmp, Buffer.concat(chunks));
                             const dest = join(mediaDir, name);
-                            const optimized = optimizeImage(tmp, dest);
-                            if (!optimized) writeFileSync(dest, Buffer.concat(chunks)); // fallback: store raw
-                            try { unlinkSync(tmp); } catch {}
-                            const thumbOk = makeThumb(dest, join(mediaDir, '.thumbs', name), { force: true });
+                            let thumbOk;
+                            try {
+                                const optimized = optimizeImage(tmp, dest);
+                                if (!optimized) writeFileSync(dest, Buffer.concat(chunks)); // fallback: store raw
+                                thumbOk = makeThumb(dest, join(mediaDir, '.thumbs', name), { force: true });
+                            } finally {
+                                try { unlinkSync(tmp); } catch {}
+                            }
                             send(res, 200, {
                                 filename: name,
                                 path: `assets/${location}/Media/${name}`,
