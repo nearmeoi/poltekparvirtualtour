@@ -24,7 +24,7 @@ export const TOUR_DATA = [
     title: 'Museum La Galigo',
     subtitle: 'Pintu Masuk',
     description: 'Fort Rotterdam – Museum Terlengkap di Sulawesi Selatan',
-    panorama: 'assets/Lagaligo/Media/IMG_20260407_112924_00_094.jpg',
+    panorama: 'assets/Lagaligo/Media/awal.jpg',
     thumbnail: 'assets/thumb_lagaligo.jpg',
     audio: 'assets/Narasi/Audio/Lagaligo/1. Pintu Masuk.mp3',
     duration: 200,
