@@ -82,7 +82,9 @@ export class HotspotManager {
 
         const radius = 45;
         const yawRad = THREE.MathUtils.degToRad((data.yaw || 0) + 90);
-        const pitchRad = THREE.MathUtils.degToRad(data.pitch || 0);
+        // Nav arrows always at floor level (-28°) so they lie on the ground like Google Maps
+        const isNavArrow = type === 'arrow' || type === 'back';
+        const pitchRad = THREE.MathUtils.degToRad(isNavArrow ? -28 : (data.pitch || 0));
 
         const x = radius * Math.sin(yawRad) * Math.cos(pitchRad);
         const y = radius * Math.sin(pitchRad);
@@ -92,13 +94,12 @@ export class HotspotManager {
 
         mesh.position.set(x, y, z);
 
-        if (type === 'arrow' || type === 'back') {
+        if (isNavArrow) {
             mesh.scale.set(2.2, 2.2, 2.2);
 
             const facingCamera = new THREE.Vector3().copy(mesh.position).normalize().negate();
-
-            // 0.90 = nearly flat on the floor, matching Google Maps Street View
-            const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, 0.90).normalize();
+            // 0.12 = 88% flat (worldUp) + 12% toward camera — nearly horizontal but readable from eye level
+            const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, 0.12).normalize();
 
             // next (arrow): chevron points AWAY from center
             // back:         chevron points TOWARD center (negate horizontal direction)
@@ -126,7 +127,7 @@ export class HotspotManager {
         mesh.userData.label = data.label || 'Hotspot';
         mesh.userData.hotspotData = data;
 
-        if (data.label && type !== 'arrow' && type !== 'back') {
+        if (data.label && !isNavArrow) {
             const textSize = data.textSize || 1.0;
             const labelOffset = data.labelOffset !== undefined ? data.labelOffset : 0;
             const wrapLabel = data.labelWrap || false;
