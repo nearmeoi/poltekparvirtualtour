@@ -93,23 +93,22 @@ export class HotspotManager {
         mesh.position.set(x, y, z);
 
         if (type === 'arrow' || type === 'back') {
-            mesh.scale.set(1.8, 1.8, 1.8);
+            mesh.scale.set(2.2, 2.2, 2.2);
 
-            // Google Maps style: laying flat but tilted towards the camera for visibility
             const facingCamera = new THREE.Vector3().copy(mesh.position).normalize().negate();
-            
-            // Interpolate between flat (worldUp) and billboard (facingCamera)
-            const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, 0.65).normalize();
-            
-            // Local Y points away from the camera on the horizontal plane
-            const horizontalDir = new THREE.Vector3(x, 0, z).normalize();
+
+            // 0.90 = nearly flat on the floor, matching Google Maps Street View
+            const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, 0.90).normalize();
+
+            // next (arrow): chevron points AWAY from center
+            // back:         chevron points TOWARD center (negate horizontal direction)
+            const sign = type === 'back' ? -1 : 1;
+            const horizontalDir = new THREE.Vector3(sign * x, 0, sign * z).normalize();
             const localY = horizontalDir.clone();
-            
-            // Recompute localX to ensure right-handed orthonormality
+
             const localX = new THREE.Vector3().crossVectors(localY, localZ).normalize();
-            // Recompute localY to be perpendicular to localX and localZ
             localY.crossVectors(localZ, localX).normalize();
-            
+
             const matrix = new THREE.Matrix4();
             matrix.makeBasis(localX, localY, localZ);
             mesh.setRotationFromMatrix(matrix);
@@ -127,7 +126,7 @@ export class HotspotManager {
         mesh.userData.label = data.label || 'Hotspot';
         mesh.userData.hotspotData = data;
 
-        if (data.label) {
+        if (data.label && type !== 'arrow' && type !== 'back') {
             const textSize = data.textSize || 1.0;
             const labelOffset = data.labelOffset !== undefined ? data.labelOffset : 0;
             const wrapLabel = data.labelWrap || false;
