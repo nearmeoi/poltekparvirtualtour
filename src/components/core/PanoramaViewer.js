@@ -74,6 +74,25 @@ export class PanoramaViewer {
         // Initialize Hotspots Data
         this.hotspotsData = {};
         this.fetchHotspots(); // Fetch on init
+
+        // Developer Back Feature
+        this._navHistory = [];
+        this._isNavigatingBack = false;
+
+        if (import.meta.env.DEV) {
+            window.addEventListener('keydown', (e) => {
+                const activeTag = document.activeElement?.tagName;
+                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+
+                if (e.key === 'Backspace' || (e.key.toLowerCase() === 'b' && !e.shiftKey)) {
+                    e.preventDefault();
+                    this.navigateBack();
+                } else if (e.key.toLowerCase() === 'k') {
+                    e.preventDefault();
+                    this.autoAddReturnHotspot();
+                }
+            });
+        }
     }
 
     setInfoOverlay(overlay) {
@@ -543,6 +562,15 @@ export class PanoramaViewer {
         // Sync current hotspots to data before leaving this scene
         this.syncCurrentHotspotsToData();
 
+        // Save history in DEV mode before loading new scene
+        if (import.meta.env.DEV && !this._isNavigatingBack) {
+            const currentTarget = this.currentSceneId || this.currentPath;
+            if (currentTarget && currentTarget !== target) {
+                this._navHistory.push(currentTarget);
+                console.log('[Dev History] Saved navigation point:', currentTarget);
+            }
+        }
+
         // target can be an ID (key in SCENE_MAP) or a direct path
         const sceneData = SCENE_MAP[target];
 
@@ -562,6 +590,71 @@ export class PanoramaViewer {
             this.loadTexture(target);
         } else {
             console.warn(`Target scene invalid or not found: ${target}`);
+        }
+    }
+
+    navigateBack() {
+        if (this._navHistory && this._navHistory.length > 0) {
+            const prevTarget = this._navHistory.pop();
+            console.log('[Dev History] Navigating back to:', prevTarget);
+            this._isNavigatingBack = true;
+            this.navigateToScene(prevTarget);
+            this._isNavigatingBack = false;
+        } else {
+            console.log('[Dev History] No previous scene history.');
+        }
+    }
+
+    autoAddReturnHotspot() {
+        if (!this._navHistory || this._navHistory.length === 0) {
+            console.warn('[Dev History] No history to create a return hotspot.');
+            return;
+        }
+
+        const prevTarget = this._navHistory[this._navHistory.length - 1];
+
+        // Convert camera forward vector to yaw & pitch
+        const dir = new THREE.Vector3();
+        this.camera.getWorldDirection(dir);
+
+        const pitchRad = Math.asin(dir.y);
+        const yawRad = Math.atan2(dir.x, -dir.z);
+
+        let yaw = THREE.MathUtils.radToDeg(yawRad) - 90;
+        let pitch = THREE.MathUtils.radToDeg(pitchRad);
+
+        if (yaw < -180) yaw += 360;
+        if (yaw > 180) yaw -= 360;
+
+        yaw = parseFloat(yaw.toFixed(2));
+        pitch = parseFloat(pitch.toFixed(2));
+
+        const newData = {
+            type: 'arrow',
+            yaw: yaw,
+            pitch: pitch,
+            target: prevTarget,
+            label: 'Kembali'
+        };
+
+        const mesh = this.hotspotManager._createHotspotMesh(newData);
+        if (mesh) {
+            this.hotspotManager.group.add(mesh);
+            this.hotspotManager.hotspots.push(mesh);
+
+            // Save to localStorage
+            const payload = this.getCurrentSceneHotspots();
+            if (payload) {
+                localStorage.setItem(`hotspots_${payload.sceneId}`, JSON.stringify(payload.hotspots));
+                console.log(`[Dev History] Auto-saved return hotspot to: ${payload.sceneId}`);
+                
+                // Sync with admin panel UI if active
+                if (window.adminPanel && window.adminPanel.isAdminMode) {
+                    window.adminPanel.selectHotspot(mesh.userData.hotspotData);
+                    window.adminPanel.renderSceneInfo();
+                    window.adminPanel.renderHotspotChips();
+                }
+            }
         }
     }
 
@@ -886,20 +979,48 @@ export class PanoramaViewer {
         if (intersects.length > 0) {
             const point = intersects[0].point;
 
-            // Update Mesh Position
             const radius = 45;
-            const p = point.clone().normalize().multiplyScalar(radius);
+            const worldUp = new THREE.Vector3(0, 1, 0);
+            const type = this.draggedMesh.userData.hotspotData?.type;
+            const isNavArrow = type === 'arrow' || type === 'back';
+
+            let p;
+            if (isNavArrow) {
+                // Keep nav arrows at fixed floor pitch (-28°) during drag — only yaw follows mouse
+                const dir = point.clone().normalize();
+                const yawRad = Math.atan2(dir.x, -dir.z);
+                const floorPitch = THREE.MathUtils.degToRad(-28);
+                p = new THREE.Vector3(
+                    radius * Math.sin(yawRad) * Math.cos(floorPitch),
+                    radius * Math.sin(floorPitch),
+                    -radius * Math.cos(yawRad) * Math.cos(floorPitch)
+                );
+            } else {
+                p = point.clone().normalize().multiplyScalar(radius);
+            }
             this.draggedMesh.position.copy(p);
 
-            // Update orientation to match new position (Rigid Vertical)
-            const forward = p.clone().normalize().negate();
-            const worldUp = new THREE.Vector3(0, 1, 0);
-            const right = new THREE.Vector3().crossVectors(worldUp, forward).normalize();
-            const up = new THREE.Vector3().crossVectors(forward, right).normalize();
-
-            const matrix = new THREE.Matrix4();
-            matrix.makeBasis(right, up, forward);
-            this.draggedMesh.setRotationFromMatrix(matrix);
+            if (isNavArrow) {
+                // Flat Google Maps orientation during drag
+                const facingCamera = p.clone().normalize().negate();
+                const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, 0.12).normalize();
+                const sign = type === 'back' ? -1 : 1;
+                const horizontalDir = new THREE.Vector3(sign * p.x, 0, sign * p.z).normalize();
+                const localY = horizontalDir.clone();
+                const localX = new THREE.Vector3().crossVectors(localY, localZ).normalize();
+                localY.crossVectors(localZ, localX).normalize();
+                const matrix = new THREE.Matrix4();
+                matrix.makeBasis(localX, localY, localZ);
+                this.draggedMesh.setRotationFromMatrix(matrix);
+            } else {
+                // Rigid vertical billboard for other hotspot types
+                const forward = p.clone().normalize().negate();
+                const right = new THREE.Vector3().crossVectors(worldUp, forward).normalize();
+                const up = new THREE.Vector3().crossVectors(forward, right).normalize();
+                const matrix = new THREE.Matrix4();
+                matrix.makeBasis(right, up, forward);
+                this.draggedMesh.setRotationFromMatrix(matrix);
+            }
 
             // SYNC Label Position
             if (this.draggedMesh.userData.labelSprite) {
