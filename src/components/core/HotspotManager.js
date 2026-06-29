@@ -82,9 +82,8 @@ export class HotspotManager {
 
         const radius = 45;
         const yawRad = THREE.MathUtils.degToRad((data.yaw || 0) + 90);
-        // Nav arrows always at floor level (-28°) so they lie on the ground like Google Maps
         const isNavArrow = type === 'arrow' || type === 'back';
-        const pitchRad = THREE.MathUtils.degToRad(isNavArrow ? -28 : (data.pitch || 0));
+        const pitchRad = THREE.MathUtils.degToRad(data.pitch || 0);
 
         const x = radius * Math.sin(yawRad) * Math.cos(pitchRad);
         const y = radius * Math.sin(pitchRad);

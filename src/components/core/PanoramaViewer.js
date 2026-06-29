@@ -984,20 +984,7 @@ export class PanoramaViewer {
             const type = this.draggedMesh.userData.hotspotData?.type;
             const isNavArrow = type === 'arrow' || type === 'back';
 
-            let p;
-            if (isNavArrow) {
-                // Keep nav arrows at fixed floor pitch (-28°) during drag — only yaw follows mouse
-                const dir = point.clone().normalize();
-                const yawRad = Math.atan2(dir.x, -dir.z);
-                const floorPitch = THREE.MathUtils.degToRad(-28);
-                p = new THREE.Vector3(
-                    radius * Math.sin(yawRad) * Math.cos(floorPitch),
-                    radius * Math.sin(floorPitch),
-                    -radius * Math.cos(yawRad) * Math.cos(floorPitch)
-                );
-            } else {
-                p = point.clone().normalize().multiplyScalar(radius);
-            }
+            const p = point.clone().normalize().multiplyScalar(radius);
             this.draggedMesh.position.copy(p);
 
             if (isNavArrow) {
