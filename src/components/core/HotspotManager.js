@@ -97,8 +97,8 @@ export class HotspotManager {
             mesh.scale.set(2.2, 2.2, 2.2);
 
             const facingCamera = new THREE.Vector3().copy(mesh.position).normalize().negate();
-            // 0.12 = 88% flat (worldUp) + 12% toward camera — nearly horizontal but readable from eye level
-            const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, 0.12).normalize();
+            // 0.40 = 60% flat + 40% toward camera — visible oval from any viewing angle, like real Google Maps arrows
+            const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, 0.40).normalize();
 
             // next (arrow): chevron points AWAY from center
             // back:         chevron points TOWARD center (negate horizontal direction)
