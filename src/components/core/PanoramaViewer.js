@@ -990,7 +990,8 @@ export class PanoramaViewer {
             if (isNavArrow) {
                 // Flat Google Maps orientation during drag
                 const facingCamera = p.clone().normalize().negate();
-                const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, 0.40).normalize();
+                const navTilt = this.draggedMesh.userData.hotspotData?.navTilt ?? 0.40;
+                const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, navTilt).normalize();
                 const sign = type === 'back' ? -1 : 1;
                 const horizontalDir = new THREE.Vector3(sign * p.x, 0, sign * p.z).normalize();
                 const localY = horizontalDir.clone();

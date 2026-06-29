@@ -388,6 +388,18 @@ export class AdminPanel {
 
         this.form.appendChild(sizesGrid);
 
+        // Nav arrow tilt — only for arrow/back types
+        if (hotspot.type === 'arrow' || hotspot.type === 'back') {
+            const tiltCol = document.createElement('div');
+            tiltCol.appendChild(this.createLabel('Arrow Tilt  (0 = flat · 1 = upright)'));
+            tiltCol.appendChild(this.createSlider(hotspot.navTilt !== undefined ? hotspot.navTilt : 0.40, 0, 1, 0.05, (val) => {
+                hotspot.navTilt = parseFloat(val);
+                this.viewer.refreshHotspot?.(hotspot);
+                this.markDirty();
+            }));
+            this.form.appendChild(tiltCol);
+        }
+
         // Color
         this.form.appendChild(this.createLabel('Color'));
         this.form.appendChild(this.createColorPicker(hotspot));
