@@ -990,13 +990,23 @@ export class PanoramaViewer {
             if (isNavArrow) {
                 // Flat Google Maps orientation during drag
                 const facingCamera = p.clone().normalize().negate();
-                const navTilt = this.draggedMesh.userData.hotspotData?.navTilt ?? 0.40;
+                const hotspotData = this.draggedMesh.userData.hotspotData;
+                const navTilt = hotspotData?.navTilt ?? 0.40;
                 const localZ = new THREE.Vector3().lerpVectors(worldUp, facingCamera, navTilt).normalize();
                 const sign = type === 'back' ? -1 : 1;
                 const horizontalDir = new THREE.Vector3(sign * p.x, 0, sign * p.z).normalize();
                 const localY = horizontalDir.clone();
-                const localX = new THREE.Vector3().crossVectors(localY, localZ).normalize();
+                let localX = new THREE.Vector3().crossVectors(localY, localZ).normalize();
                 localY.crossVectors(localZ, localX).normalize();
+                const navRoll = THREE.MathUtils.degToRad(hotspotData?.navRoll || 0);
+                if (navRoll !== 0) {
+                    const cosR = Math.cos(navRoll);
+                    const sinR = Math.sin(navRoll);
+                    const rx = new THREE.Vector3().addScaledVector(localX, cosR).addScaledVector(localY, sinR);
+                    const ry = new THREE.Vector3().addScaledVector(localX, -sinR).addScaledVector(localY, cosR);
+                    localX = rx;
+                    localY.copy(ry);
+                }
                 const matrix = new THREE.Matrix4();
                 matrix.makeBasis(localX, localY, localZ);
                 this.draggedMesh.setRotationFromMatrix(matrix);

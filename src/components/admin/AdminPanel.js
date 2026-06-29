@@ -388,7 +388,7 @@ export class AdminPanel {
 
         this.form.appendChild(sizesGrid);
 
-        // Nav arrow tilt — only for arrow/back types
+        // Nav arrow tilt + roll — only for arrow/back types
         if (hotspot.type === 'arrow' || hotspot.type === 'back') {
             const tiltCol = document.createElement('div');
             tiltCol.appendChild(this.createLabel('Arrow Tilt  (0 = flat · 1 = upright)'));
@@ -398,6 +398,15 @@ export class AdminPanel {
                 this.markDirty();
             }));
             this.form.appendChild(tiltCol);
+
+            const rollCol = document.createElement('div');
+            rollCol.appendChild(this.createLabel('Kemiringan Kiri-Kanan  (° negatif = kiri)'));
+            rollCol.appendChild(this.createSlider(hotspot.navRoll !== undefined ? hotspot.navRoll : 0, -45, 45, 1, (val) => {
+                hotspot.navRoll = parseFloat(val);
+                this.viewer.refreshHotspot?.(hotspot);
+                this.markDirty();
+            }));
+            this.form.appendChild(rollCol);
         }
 
         // Color

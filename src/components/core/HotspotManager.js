@@ -106,8 +106,19 @@ export class HotspotManager {
             const horizontalDir = new THREE.Vector3(sign * x, 0, sign * z).normalize();
             const localY = horizontalDir.clone();
 
-            const localX = new THREE.Vector3().crossVectors(localY, localZ).normalize();
+            let localX = new THREE.Vector3().crossVectors(localY, localZ).normalize();
             localY.crossVectors(localZ, localX).normalize();
+
+            // navRoll: left-right tilt in degrees — rotates localX/localY around localZ
+            const navRoll = THREE.MathUtils.degToRad(data.navRoll || 0);
+            if (navRoll !== 0) {
+                const cosR = Math.cos(navRoll);
+                const sinR = Math.sin(navRoll);
+                const rx = new THREE.Vector3().addScaledVector(localX, cosR).addScaledVector(localY, sinR);
+                const ry = new THREE.Vector3().addScaledVector(localX, -sinR).addScaledVector(localY, cosR);
+                localX = rx;
+                localY.copy(ry);
+            }
 
             const matrix = new THREE.Matrix4();
             matrix.makeBasis(localX, localY, localZ);
