@@ -6,6 +6,7 @@ import { CONFIG } from '../../config.js';
 // import HOTSPOTS_DATA from '../../data/hotspots.json'; // Removed static import
 import { SCENE_MAP } from '../../data/sceneMap.js';
 import { HotspotManager } from './HotspotManager.js';
+import HOTSPOTS_DATA from '../../data/hotspots.json';
 
 export class PanoramaViewer {
     constructor(scene, onBack, camera, renderer, bus) {
@@ -71,8 +72,8 @@ export class PanoramaViewer {
         // the interactable raycast tree — required for click/gaze nav + admin drag/select.
         this.hotspotManager = new HotspotManager(this.group, _bus);
 
-        // Initialize Hotspots Data
-        this.hotspotsData = {};
+        // Initialize Hotspots Data — start from bundled JSON, localStorage takes priority
+        this.hotspotsData = HOTSPOTS_DATA || {};
         this.fetchHotspots(); // Fetch on init
 
         // Developer Back Feature
@@ -107,7 +108,7 @@ export class PanoramaViewer {
         // Offline: hotspots live in localStorage (`hotspots_<scenePath>`), written
         // by the admin panel — no backend. checkAndLoadHotspots reads localStorage
         // per scene directly, so just (re)load the current scene's hotspots here.
-        this.hotspotsData = {};
+        // Don't wipe bundled HOTSPOTS_DATA — just refresh current scene from localStorage.
         if (this.currentPath) this.checkAndLoadHotspots(this.currentPath);
     }
 
@@ -280,9 +281,10 @@ export class PanoramaViewer {
             this.clearHotspots();
             this._loadVideoScene(location.video, location);
         } else if (location.panorama) {
+            // Clear first so cached-texture sync path can't be undone by a later clear.
+            this.clearHotspots();
             // Load with depth map if available
             this.loadTextureWithDepth(location.panorama, location.depthMap);
-            this.clearHotspots();
 
             // Emit scene:loaded so NarrationController picks up audio + subtitles
             if (this.bus) {
@@ -1400,7 +1402,19 @@ export class PanoramaViewer {
             if (this._activeVideo !== video) return;
             console.error('[VideoScene] Failed to load video:', videoUrl);
             this.hideLoading();
-            this.loadFallbackTexture('VIDEO ERROR');
+            if (sceneData?.panorama) {
+                // Fall back to the still panorama so audio/hotspots still work.
+                this.clearHotspots();
+                this.loadTexture(sceneData.panorama);
+                if (this.bus) {
+                    this.bus.emit('scene:loaded', {
+                        sceneId: sceneData.id ?? videoUrl,
+                        sceneData,
+                    });
+                }
+            } else {
+                this.loadFallbackTexture('VIDEO ERROR');
+            }
         };
 
         video.addEventListener('canplay', onCanPlay, { once: true });
