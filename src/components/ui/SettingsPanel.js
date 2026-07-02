@@ -39,6 +39,8 @@ export class SettingsPanel {
         try {
             supported = !!(navigator.xr && await navigator.xr.isSessionSupported('immersive-vr'));
         } catch { supported = false; }
+        // iOS always uses CardboardModeManager (polyfill bypassed in initWebXR)
+        if (isIOS()) supported = false;
         this._vrMode = supported ? 'webxr' : 'cardboard';
 
         const device = isIOS() ? 'iOS' : isAndroid() ? 'Android' : (isMobile() ? 'Mobile' : 'Desktop');
