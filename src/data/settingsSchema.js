@@ -19,6 +19,9 @@ export const SETTINGS_SCHEMA = [
     { group: 'Stereo (double-vision)', label: 'VR field of view',     path: 'fov.vr',           min: 30,    max: 110,  step: 5,     modes: ['cardboard'] },
     { group: 'Stereo (double-vision)', label: 'Panorama distance',    path: 'panorama.sphereRadius', min: 20, max: 90, step: 1,    modes: ['webxr', 'cardboard'] },
     { group: 'Subtitle',           label: 'Subtitle size',       path: 'narration.subtitleScale', min: 0.5, max: 2.5, step: 0.1, modes: ['webxr', 'cardboard'] },
+    { group: 'Control Dock',       label: 'Dock depth (Z)',      path: 'controlDock.dockZ',       min: -4.0, max: -0.5, step: 0.1, modes: ['webxr', 'cardboard'] },
+    { group: 'Control Dock',       label: 'Dock height (Y)',     path: 'controlDock.dockY',       min: -3.0, max: 1.0,  step: 0.1, modes: ['webxr', 'cardboard'] },
+    { group: 'Control Dock',       label: 'Dock offset (X)',     path: 'controlDock.dockX',       min: -2.0, max: 2.0,  step: 0.1, modes: ['webxr', 'cardboard'] },
 ];
 
 /** Round to the schema step's decimal count to avoid float drift (e.g. 0.065000001). */

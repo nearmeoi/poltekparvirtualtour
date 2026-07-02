@@ -225,6 +225,16 @@ export class PanoramaViewer {
         if (this.settingsBtn) this.settingsBtn.visible = visible;
     }
 
+    updateDockPosition() {
+        const z = CONFIG.controlDock.dockZ ?? -1.6;
+        const y = CONFIG.controlDock.dockY ?? -0.9;
+        const x = CONFIG.controlDock.dockX ?? 0;
+        if (this.backBtn)     this.backBtn.position.set(x - 0.3, y, z);
+        if (this.pauseBtn)    this.pauseBtn.position.set(x + 0.0, y, z);
+        if (this.skipBtn)     this.skipBtn.position.set(x + 0.3, y, z);
+        if (this.settingsBtn) this.settingsBtn.position.set(x + 0.6, y, z);
+    }
+
     setNarrationController(controller) {
         this._narrationController = controller;
     }
@@ -256,6 +266,7 @@ export class PanoramaViewer {
         }
 
         this.currentLocation = location;
+        this._stopVideo(); // clean up any previous 360° video
 
         // Audio is handled by NarrationController via scene:loaded event
 
@@ -264,6 +275,10 @@ export class PanoramaViewer {
             this.loadScene(location.scenes[0]);
             // Lazy load other scenes in background
             this.preloadScenes(location.scenes.slice(1));
+        } else if (location.video) {
+            // 360° video scene (dev only — served by videoFsPlugin)
+            this.clearHotspots();
+            this._loadVideoScene(location.video, location);
         } else if (location.panorama) {
             // Load with depth map if available
             this.loadTextureWithDepth(location.panorama, location.depthMap);
@@ -335,6 +350,7 @@ export class PanoramaViewer {
     }
 
     loadTexture(path) {
+        this._stopVideo(); // clean up any active 360° video
         this.currentPath = path; // Track Path
 
         // PROTOTYPE MODE: If path starts with "placeholder", generate strictly procedural texture
@@ -1338,7 +1354,148 @@ export class PanoramaViewer {
         }
     }
 
+    // ── 360° Video ──────────────────────────────────────────────────────────────
+
+    /**
+     * Load a 360° video as the sphere texture using THREE.VideoTexture.
+     * Requires the dev-only videoFsPlugin to serve the file at the given URL.
+     */
+    _loadVideoScene(videoUrl, sceneData) {
+        this.showLoading();
+
+        const video = document.createElement('video');
+        video.src = videoUrl;
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.crossOrigin = 'anonymous';
+        this._activeVideo = video;
+
+        const onCanPlay = () => {
+            if (this._activeVideo !== video) return; // superseded
+
+            const texture = new THREE.VideoTexture(video);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            this._videoTexture = texture;
+
+            this.basicMaterial.map = texture;
+            this.basicMaterial.needsUpdate = true;
+            this.sphere.material = this.basicMaterial;
+            this.useParallax = false;
+            this.hideLoading();
+
+            video.play().catch(err => {
+                console.warn('[VideoScene] Autoplay blocked — user interaction required:', err);
+            });
+
+            this._addNadirCap(sceneData?.nadirLogo);
+
+            if (this.bus && sceneData) {
+                this.bus.emit('scene:loaded', {
+                    sceneId: sceneData.id ?? videoUrl,
+                    sceneData,
+                });
+            }
+        };
+
+        const onError = () => {
+            if (this._activeVideo !== video) return;
+            console.error('[VideoScene] Failed to load video:', videoUrl);
+            this.hideLoading();
+            this.loadFallbackTexture('VIDEO ERROR');
+        };
+
+        video.addEventListener('canplay', onCanPlay, { once: true });
+        video.addEventListener('error', onError, { once: true });
+        video.load();
+    }
+
+    /** Stop + discard the active 360° video and its Three.js texture. */
+    _stopVideo() {
+        this._removeNadirCap();
+        if (this._activeVideo) {
+            this._activeVideo.pause();
+            this._activeVideo.src = '';
+            try { this._activeVideo.load(); } catch (_) { /* ignore */ }
+            this._activeVideo = null;
+        }
+        if (this._videoTexture) {
+            this._videoTexture.dispose();
+            this._videoTexture = null;
+        }
+    }
+
+    /**
+     * Add a circular cap at the nadir (bottom of sphere) to hide the camera
+     * person / tripod. Optionally loads a logo texture; falls back to a solid
+     * dark circle.
+     */
+    _addNadirCap(logoPath) {
+        this._removeNadirCap();
+
+        const R = CONFIG.panorama.sphereRadius;
+        // Inscribed-circle formula: place the disk so its rim sits exactly on the
+        // sphere's inner surface. This way both eyes see the cap at the correct
+        // stereo depth and it doesn't cause double-vision in VR.
+        const capRadius = R * 0.28;
+        const capY = -Math.sqrt(R * R - capRadius * capRadius); // ≈ -48 for R=50
+
+        const geo = new THREE.CircleGeometry(capRadius, 64);
+
+        // Procedural dark circle canvas (shown until logo loads, or if no logo)
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 512, 512);
+        ctx.beginPath();
+        ctx.arc(256, 256, 248, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.92)';
+        ctx.fill();
+        const tex = new THREE.CanvasTexture(canvas);
+
+        const mat = new THREE.MeshBasicMaterial({
+            map: tex,
+            transparent: true,
+            depthTest: true,  // must be true for correct stereo depth in VR
+            side: THREE.DoubleSide,
+        });
+
+        const cap = new THREE.Mesh(geo, mat);
+        cap.rotation.x = Math.PI / 2; // face upward (visible from inside sphere looking down)
+        cap.position.set(0, capY, 0);
+
+        this._nadirCap = cap;
+        this.group.add(cap);
+
+        if (logoPath) {
+            new THREE.TextureLoader().load(logoPath, (logoTex) => {
+                logoTex.colorSpace = THREE.SRGBColorSpace;
+                if (this._nadirCap) {
+                    mat.map = logoTex;
+                    mat.needsUpdate = true;
+                    tex.dispose();
+                }
+            });
+        }
+    }
+
+    _removeNadirCap() {
+        if (this._nadirCap) {
+            this.group.remove(this._nadirCap);
+            if (this._nadirCap.material.map) this._nadirCap.material.map.dispose();
+            this._nadirCap.material.dispose();
+            this._nadirCap.geometry.dispose();
+            this._nadirCap = null;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────
+
     dispose() {
+        this._stopVideo();
+
         // Remove event listeners
         if (this.onDebugClick) {
             window.removeEventListener('click', this.onDebugClick);

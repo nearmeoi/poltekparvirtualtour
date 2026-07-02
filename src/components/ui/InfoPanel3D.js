@@ -150,7 +150,7 @@ export class InfoPanel3D {
         );
     }
 
-    drawTexture(title, description, bgColor = 'rgba(30, 41, 59, 0.95)', pageInfo = '') {
+    drawTexture(title, description, bgColor = 'rgba(255, 255, 255, 0.95)', pageInfo = '') {
         const w = 1024;
         const h = 800;
         const canvas = document.createElement('canvas');
@@ -165,11 +165,11 @@ export class InfoPanel3D {
 
         // Border
         ctx.lineWidth = 4;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
         ctx.stroke();
 
         // Title
-        ctx.fillStyle = '#f3f4f6';
+        ctx.fillStyle = '#1f2937';
         ctx.font = 'bold 65px Roboto, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
@@ -179,18 +179,18 @@ export class InfoPanel3D {
         ctx.beginPath();
         ctx.moveTo(60, 150);
         ctx.lineTo(w - 60, 150);
-        ctx.strokeStyle = '#4b5563';
+        ctx.strokeStyle = '#e5e7eb';
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // Description
-        ctx.fillStyle = '#d1d5db';
+        ctx.fillStyle = '#374151';
         ctx.font = '40px Roboto, sans-serif';
         this.wrapText(ctx, description, 60, 190, w - 120, 60);
 
         // Page Indicator
         if (pageInfo) {
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
             ctx.font = 'italic 30px Roboto, sans-serif';
             ctx.textAlign = 'right';
             ctx.fillText(pageInfo, w - 60, h - 50);
@@ -265,7 +265,7 @@ export class InfoPanel3D {
 
         const width = data.infoWidth || 1.0;
         const height = data.infoHeight || 0.8;
-        const hexColor = data.infoColor || '#1e293b';
+        const hexColor = data.infoColor || '#ffffff';
         const opacity = data.infoOpacity !== undefined ? data.infoOpacity : 0.95;
 
         // Robust color parsing

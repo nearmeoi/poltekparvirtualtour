@@ -109,7 +109,7 @@ export class SettingsPanel3D {
             new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(closeCanvas), transparent: true, depthTest: false, side: THREE.DoubleSide })
         );
         close.renderOrder = 11002;
-        close.position.set(0, topY - ROW_H * (count + 1.1), 0.004);
+        close.position.set(PANEL_W / 2 - 0.09, topY, 0.004);
         this._makeInteractive(close, 'Close settings', () => this.hide(), 1.2);
         this.group.add(close);
     }

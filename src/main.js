@@ -94,6 +94,7 @@ class App {
         this.initControls();
         this.initScene();
         this.initComponents();
+        this.panoramaViewer?.updateDockPosition(); // apply persisted dock position
 
         this._setupBusListeners();
 
@@ -208,9 +209,22 @@ class App {
         // Gear button (control-dock) toggles the in-VR settings panel.
         this.bus.on('ui:toggle-settings', () => this.settingsPanel3D?.toggle());
 
-        // Navigation hotspots: jump to the linked scene when clicked/gazed.
-        this.bus.on('hotspot:click', ({ data }) => {
-            if (data?.target) {
+        // Scene history for back-type nav pins
+        this._sceneHistory = [];
+
+        // Navigation & Info hotspots
+        this.bus.on('hotspot:click', ({ data, position }) => {
+            if (data?.type === 'info') {
+                this.infoPanel3D?.show(data, position);
+            } else if (data?.type === 'back') {
+                // Auto-navigate to previous scene; fall back to explicit target if no history
+                const prev = this._sceneHistory.pop();
+                const dest = prev ?? data.target;
+                if (dest) this.panoramaViewer?.navigateToScene(dest);
+            } else if (data?.target) {
+                // Push current scene before navigating forward
+                const cur = this.panoramaViewer?.currentSceneId;
+                if (cur) this._sceneHistory.push(cur);
                 this.panoramaViewer?.navigateToScene(data.target);
             }
         });
@@ -643,6 +657,11 @@ class App {
             case 'narration.subtitleScale':
                 this.narrationController?.setSubtitleScale(value);
                 break;
+            case 'controlDock.dockZ':
+            case 'controlDock.dockY':
+            case 'controlDock.dockX':
+                this.panoramaViewer?.updateDockPosition();
+                break;
             case 'vr.cardboardIPD':
                 this.cardboardManager?.stereoEffect?.setEyeSeparation(value);
                 break;
@@ -686,6 +705,7 @@ class App {
         // Per-frame component updates
         this.narrationController?.update(delta);
         this.panoramaViewer?.update(delta);
+        this.panoramaViewer?.hotspotManager?.update();
         this.infoPanel3D?.update(delta);
         this.settingsPanel3D?.update(delta);
         if (this.orbitalMenu?.group.visible) {

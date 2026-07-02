@@ -53,7 +53,7 @@ export class SubtitlePanel3D {
             new THREE.PlaneGeometry(CONFIG.narration.subtitleWidth, worldH),
             this.material
         );
-        this.mesh.renderOrder = 9990;
+        this.mesh.renderOrder = 10100; // Fixed layering: Always above hotspots (9999) and panels (10000)
         this.mesh.scale.setScalar(CONFIG.narration.subtitleScale || 1);
         this.group.add(this.mesh);
     }

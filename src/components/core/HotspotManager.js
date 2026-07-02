@@ -12,6 +12,7 @@ export class HotspotManager {
         this.hotspots = [];
         this.textureCache = new Map();
         this.textureLoader = new THREE.TextureLoader();
+        this.clock = new THREE.Clock();
 
         this.group = new THREE.Group();
         this.parent.add(this.group);
@@ -123,6 +124,30 @@ export class HotspotManager {
             const matrix = new THREE.Matrix4();
             matrix.makeBasis(localX, localY, localZ);
             mesh.setRotationFromMatrix(matrix);
+
+            // --- Animation child: per-pin canvas updated every frame ---
+            // Canvas clip keeps the sweeping chevron strictly inside the oval.
+            const animCanvas = document.createElement('canvas');
+            animCanvas.width = 256; animCanvas.height = 256;
+            const animTex = new THREE.CanvasTexture(animCanvas);
+            animTex.minFilter = THREE.LinearFilter;
+            const animGeo = new THREE.PlaneGeometry(size, size);
+            const animMat = new THREE.MeshBasicMaterial({
+                map: animTex, transparent: true, depthTest: false, opacity: 1
+            });
+            const animMesh = new THREE.Mesh(animGeo, animMat);
+            animMesh.renderOrder = 10000;
+            mesh.add(animMesh);
+            mesh.userData.chevronMesh = animMesh;
+            mesh.userData.animCanvas = animCanvas;
+            mesh.userData.animTex = animTex;
+            mesh.userData.chevronPhase = 0;
+            mesh.userData.scaleProgress = 0; // 0=normal, 1=fully hovered
+            mesh.userData.scaleDirection = 0; // +1 growing, -1 shrinking
+
+            // Bounce-in: start from zero scale
+            mesh.userData.birthTime = this.clock.getElapsedTime();
+            mesh.scale.set(0.001, 0.001, 0.001);
         } else {
             // Vertical billboard facing center
             const forward = new THREE.Vector3().copy(mesh.position).normalize().negate();
@@ -137,7 +162,7 @@ export class HotspotManager {
         mesh.userData.label = data.label || 'Hotspot';
         mesh.userData.hotspotData = data;
 
-        if (data.label && !isNavArrow) {
+        if (data.label) {
             const textSize = data.textSize || 1.0;
             const labelOffset = data.labelOffset !== undefined ? data.labelOffset : 0;
             const wrapLabel = data.labelWrap || false;
@@ -165,12 +190,17 @@ export class HotspotManager {
             mesh.userData.labelSprite = labelMesh;
         }
 
-        mesh.userData.originalScale = new THREE.Vector3().copy(mesh.scale);
+        mesh.userData.isNavArrow = isNavArrow;
+        mesh.userData.originalScale = new THREE.Vector3().copy(isNavArrow ? new THREE.Vector3(2.2, 2.2, 2.2) : mesh.scale);
+        mesh.userData.isHovered = false;
         mesh.onHoverIn = () => {
-            const s = mesh.userData.originalScale;
-            mesh.scale.set(s.x * 1.3, s.y * 1.3, s.z * 1.3);
+            mesh.userData.isHovered = true;
+            if (isNavArrow) mesh.userData.scaleDirection = 1;
         };
-        mesh.onHoverOut = () => mesh.scale.copy(mesh.userData.originalScale);
+        mesh.onHoverOut = () => {
+            mesh.userData.isHovered = false;
+            if (isNavArrow) mesh.userData.scaleDirection = -1;
+        };
 
         mesh.onClick = () => {
             this.bus.emit('hotspot:click', { data, position: mesh.position.clone() });
@@ -343,23 +373,21 @@ export class HotspotManager {
         const cx = size / 2;       // 128
         const cy = size / 2 + 20;  // 148 — oval sits slightly below center
 
-        // Oval base with soft white glow
-        ctx.shadowColor = 'rgba(255,255,255,0.7)';
-        ctx.shadowBlur = 18;
+        // Oval base — dark so it's visible on both bright and dark floors
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 16;
         ctx.beginPath();
         ctx.ellipse(cx, cy, 110, 70, 0, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.fillStyle = 'rgba(0,0,0,0.60)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.80)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.40)';
         ctx.lineWidth = 3;
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Chevron arrow — upward-pointing caret, centered in oval
-        // Points: left-foot (55,170), tip (128,90), right-foot (201,170)
-        // Second tier: left-foot (75,145), tip (128,80), right-foot (181,145)
+        // Chevron arrow — white for contrast against dark oval
         ctx.shadowColor = 'rgba(255,255,255,0.9)';
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.moveTo(55, 168);
         ctx.lineTo(128, 92);
@@ -376,6 +404,107 @@ export class HotspotManager {
         texture.minFilter = THREE.LinearFilter;
         this.textureCache.set(key, texture);
         return texture;
+    }
+
+    update() {
+        const elapsed = this.clock.getElapsedTime();
+        // Elastic overshoot for bounce-in
+        const elasticOut = (t) => {
+            if (t <= 0) return 0; if (t >= 1) return 1;
+            return Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * (2 * Math.PI / 3)) + 1;
+        };
+        // Smoothstep ease-in-out for hover scale
+        const smoothstep = (t) => t * t * (3 - 2 * t);
+
+        // Delta from previous frame (used for chevron phase and scale progress)
+        const delta = elapsed - (this._prevElapsed ?? elapsed);
+        this._prevElapsed = elapsed;
+
+        this.hotspots.forEach((mesh, i) => {
+            if (!mesh.userData.isNavArrow) return;
+
+            const base = mesh.userData.originalScale;
+            const age = elapsed - (mesh.userData.birthTime ?? elapsed);
+
+            // --- Scale: bounce-in then ease-in-out hover ---
+            if (age < 0.7) {
+                // Bounce-in overrides everything
+                mesh.scale.set(base.x * elasticOut(age / 0.7), base.y * elasticOut(age / 0.7), base.z * elasticOut(age / 0.7));
+                mesh.userData.scaleProgress = 0;
+                mesh.userData.scaleDirection = 0;
+            } else {
+                // Ease-in-out hover scale (0=normal, 1=1.25×)
+                const dir = mesh.userData.scaleDirection ?? 0;
+                if (dir !== 0) {
+                    mesh.userData.scaleProgress = Math.max(0, Math.min(1,
+                        (mesh.userData.scaleProgress ?? 0) + dir * delta / 0.22
+                    ));
+                    if (mesh.userData.scaleProgress <= 0 || mesh.userData.scaleProgress >= 1) {
+                        mesh.userData.scaleDirection = 0;
+                    }
+                }
+                const mult = 1.0 + smoothstep(mesh.userData.scaleProgress ?? 0) * 0.25;
+                mesh.scale.set(base.x * mult, base.y * mult, base.z * mult);
+            }
+
+            // --- Chevron: only animates while hovered ---
+            const animCanvas = mesh.userData.animCanvas;
+            const animTex = mesh.userData.animTex;
+            if (!animCanvas || !animTex) return;
+
+            const isHovered = mesh.userData.isHovered;
+
+            if (isHovered) {
+                // Advance phase (0→1 per cycle)
+                mesh.userData.chevronPhase = ((mesh.userData.chevronPhase ?? 0) + delta / 1.4) % 1;
+                const cycle = mesh.userData.chevronPhase;
+
+                const ctx = animCanvas.getContext('2d');
+                ctx.clearRect(0, 0, 256, 256);
+
+                // Paint dark oval to cover the static chevron from the base layer
+                ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                ctx.shadowBlur = 16;
+                ctx.beginPath();
+                ctx.ellipse(128, 148, 110, 70, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.60)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.40)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.ellipse(128, 148, 107, 67, 0, 0, Math.PI * 2);
+                ctx.clip();
+
+                // Chevron sweeps bottom→top inside oval: canvas y 205 → 100
+                const chevY = 205 - cycle * 105;
+                const tipY = chevY - 36;
+                const fadeOp = cycle < 0.2
+                    ? (cycle / 0.2) * 0.92
+                    : cycle < 0.75
+                        ? 0.92
+                        : Math.max(0, (1 - (cycle - 0.75) / 0.25) * 0.92);
+
+                ctx.shadowColor = 'rgba(255,255,255,1.0)';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(72, chevY); ctx.lineTo(128, tipY); ctx.lineTo(184, chevY);
+                ctx.lineTo(168, chevY); ctx.lineTo(128, tipY + 18); ctx.lineTo(88, chevY);
+                ctx.closePath();
+                ctx.fillStyle = `rgba(255,255,255,${fadeOp})`;
+                ctx.fill();
+                ctx.restore();
+                animTex.needsUpdate = true;
+            } else if ((mesh.userData.chevronPhase ?? 0) !== 0) {
+                // Clear canvas and reset phase once when hover ends
+                mesh.userData.chevronPhase = 0;
+                animCanvas.getContext('2d').clearRect(0, 0, 256, 256);
+                animTex.needsUpdate = true;
+            }
+        });
     }
 
     _adjustColor(hex, amount) {

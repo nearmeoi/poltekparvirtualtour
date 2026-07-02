@@ -110,7 +110,10 @@ export const CONFIG = {
         yPosition: -1.0,
         lookAtY: 0.6,
         followEaseSpeed: 0.08,
-        lookDownThreshold: -0.45 // radians (~-26°)
+        lookDownThreshold: -0.45, // radians (~-26°)
+        dockZ: -1.6,   // depth in front of camera (more negative = further)
+        dockY: -0.9,   // vertical position
+        dockX: 0,      // horizontal offset (+ = right)
     },
 
     // VR Settings
