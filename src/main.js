@@ -233,6 +233,18 @@ class App {
     // ======================== WEBXR ========================
 
     initWebXR() {
+        // iOS: the webxr-polyfill says "immersive-vr supported" but implements
+        // Cardboard-optics stereo with asymmetric/toe-out FOV per eye. That
+        // rotates each eye camera outward by 10-20°, making a 360° mono panorama
+        // look completely different in each eye (large stereo ghosting). Our
+        // StereoEffect-based CardboardModeManager uses parallel cameras, which is
+        // correct for equirectangular panoramas.
+        if (isIOS()) {
+            console.log('iOS: bypassing WebXR polyfill → StereoEffect Cardboard (parallel cameras)');
+            this._setupCardboardFallback();
+            return;
+        }
+
         if (!navigator.xr) {
             console.log('No WebXR — using Cardboard fallback');
             this._setupCardboardFallback();
