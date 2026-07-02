@@ -60,14 +60,16 @@ export class SettingsPanel {
             const v = SettingsStore.get(r.def.path);
             if (v != null) {
                 r.input.value = v;
-                r.valueEl.textContent = this._fmt(v, r.def.step);
+                r.valueEl.textContent = this._fmt(v, r.def);
             }
         }
     }
 
-    _fmt(v, step) {
-        const decimals = (String(step).split('.')[1] || '').length;
-        return Number(v).toFixed(decimals);
+    _fmt(v, def) {
+        const mult = def.displayMult || 1;
+        const displayStep = def.step * mult;
+        const decimals = (String(displayStep).split('.')[1] || '').length;
+        return Number(v * mult).toFixed(decimals);
     }
 
     _build() {
@@ -135,7 +137,7 @@ export class SettingsPanel {
         input.min = def.min; input.max = def.max; input.step = def.step;
         input.addEventListener('input', () => {
             const v = Number(input.value);
-            value.textContent = this._fmt(v, def.step);
+            value.textContent = this._fmt(v, def);
             this.app.applySetting(def.path, v);
         });
 

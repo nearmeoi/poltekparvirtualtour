@@ -176,7 +176,7 @@ export class SettingsPanel3D {
         ctx.fillStyle = '#4ea1ff';
         ctx.font = 'bold 40px Roboto, sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillText(this._fmt(value, row.def.step), w - 16, h / 2);
+        ctx.fillText(this._fmt(value, row.def), w - 16, h / 2);
         row.texture.needsUpdate = true;
     }
 
@@ -205,9 +205,11 @@ export class SettingsPanel3D {
         return mesh;
     }
 
-    _fmt(v, step) {
-        const decimals = (String(step).split('.')[1] || '').length;
-        return Number(v).toFixed(decimals);
+    _fmt(v, def) {
+        const mult = def.displayMult || 1;
+        const displayStep = def.step * mult;
+        const decimals = (String(displayStep).split('.')[1] || '').length;
+        return Number(v * mult).toFixed(decimals);
     }
 
     // ---- placement ----
