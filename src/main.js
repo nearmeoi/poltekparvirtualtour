@@ -144,6 +144,10 @@ class App {
         // Clamp DPR so high-density phones don't render far more pixels than needed.
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, CONFIG.renderer.maxPixelRatio));
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        // Raw pixel passthrough: JPEG sRGB bytes → screen with no re-encoding.
+        // Three.js default (SRGBColorSpace) would apply a double gamma curve in the
+        // stereo multi-pass path (render-target write + screen write = 2× encode).
+        this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
         this.container.appendChild(this.renderer.domElement);
     }
 
@@ -543,7 +547,6 @@ class App {
         ctx.stroke();
 
         const texture = new THREE.CanvasTexture(canvas);
-        texture.colorSpace = THREE.SRGBColorSpace;
         const material = new THREE.MeshBasicMaterial({ map: texture });
         this.scene.add(new THREE.Mesh(geometry, material));
     }

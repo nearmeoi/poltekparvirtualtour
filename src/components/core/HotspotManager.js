@@ -71,7 +71,6 @@ export class HotspotManager {
 
         if (iconUrl) {
             this.textureLoader.load(iconUrl, (tex) => {
-                tex.colorSpace = THREE.SRGBColorSpace;
                 material.map = tex;
                 material.needsUpdate = true;
             });

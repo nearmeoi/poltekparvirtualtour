@@ -154,8 +154,7 @@ export class StereoEffect {
             type: THREE.UnsignedByteType,
             depthBuffer: true,
             stencilBuffer: false,
-            samples: CONFIG.vr.stereoMSAASamples,
-            colorSpace: THREE.SRGBColorSpace // Ensure correct color vibrancy
+            samples: CONFIG.vr.stereoMSAASamples
         });
 
         this.renderTargetR = new THREE.WebGLRenderTarget(renderWidth, renderHeight, {
@@ -165,8 +164,7 @@ export class StereoEffect {
             type: THREE.UnsignedByteType,
             depthBuffer: true,
             stencilBuffer: false,
-            samples: CONFIG.vr.stereoMSAASamples,
-            colorSpace: THREE.SRGBColorSpace // Ensure correct color vibrancy
+            samples: CONFIG.vr.stereoMSAASamples
         });
 
         // Update material uniforms

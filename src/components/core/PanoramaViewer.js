@@ -387,8 +387,7 @@ export class PanoramaViewer {
         this.textureLoader.load(
             path,
             (texture) => {
-                texture.colorSpace = THREE.SRGBColorSpace;
-                // Cache the texture (with LRU eviction)
+                // No colorSpace: raw JPEG bytes pass straight to screen (LinearSRGBColorSpace output)
                 this._cacheTexture(path, texture);
 
                 this.basicMaterial.map = texture;
@@ -440,7 +439,6 @@ export class PanoramaViewer {
             this.textureLoader.load(
                 path,
                 (texture) => {
-                    texture.colorSpace = THREE.SRGBColorSpace;
                     this._cacheTexture(path, texture);
                     this.pendingTextures.delete(path); // Remove from pending
                     console.log('Preloaded texture:', path);
@@ -1181,7 +1179,6 @@ export class PanoramaViewer {
         drawText(w * 0.25);
 
         const texture = new THREE.CanvasTexture(canvas);
-        texture.colorSpace = THREE.SRGBColorSpace;
         this.basicMaterial.map = texture;
         this.basicMaterial.needsUpdate = true;
     }
@@ -1375,7 +1372,6 @@ export class PanoramaViewer {
             if (this._activeVideo !== video) return; // superseded
 
             const texture = new THREE.VideoTexture(video);
-            texture.colorSpace = THREE.SRGBColorSpace;
             texture.minFilter = THREE.LinearFilter;
             texture.magFilter = THREE.LinearFilter;
             this._videoTexture = texture;
@@ -1471,7 +1467,6 @@ export class PanoramaViewer {
 
         if (logoPath) {
             new THREE.TextureLoader().load(logoPath, (logoTex) => {
-                logoTex.colorSpace = THREE.SRGBColorSpace;
                 if (this._nadirCap) {
                     mat.map = logoTex;
                     mat.needsUpdate = true;
