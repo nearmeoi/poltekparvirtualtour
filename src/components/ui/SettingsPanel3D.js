@@ -85,19 +85,39 @@ export class SettingsPanel3D {
             const yRow = topY - ROW_H * (i + 1.2);
             const row = { def };
 
-            const { mesh, canvas, ctx } = this._makeLabelPlane();
-            mesh.position.set(-0.26, yRow, 0.002);
-            this.group.add(mesh);
-            row.canvas = canvas; row.ctx = ctx; row.mesh = mesh;
-            row.texture = mesh.material.map;
+            if (def.fineStep) {
+                // 4-button layout: [−5][−1] value [+1][+5]
+                const { mesh, canvas, ctx } = this._makeLabelPlane(0.72);
+                mesh.position.set(-0.35, yRow, 0.002);
+                this.group.add(mesh);
+                row.canvas = canvas; row.ctx = ctx; row.mesh = mesh;
+                row.texture = mesh.material.map;
 
-            row.minus = this._makeStepButton('−', def, -1);
-            row.minus.position.set(0.36, yRow, 0.004);
-            this.group.add(row.minus);
+                const fineDef = { ...def, step: def.fineStep };
+                row.minusBig  = this._makeStepButton('−5', def,     -1, 0.12);
+                row.minusFine = this._makeStepButton('−1', fineDef, -1, 0.12);
+                row.plusFine  = this._makeStepButton('+1', fineDef, +1, 0.12);
+                row.plusBig   = this._makeStepButton('+5', def,     +1, 0.12);
+                row.minusBig.position.set(0.12, yRow, 0.004);
+                row.minusFine.position.set(0.27, yRow, 0.004);
+                row.plusFine.position.set(0.42, yRow, 0.004);
+                row.plusBig.position.set(0.57, yRow, 0.004);
+                this.group.add(row.minusBig, row.minusFine, row.plusFine, row.plusBig);
+            } else {
+                const { mesh, canvas, ctx } = this._makeLabelPlane();
+                mesh.position.set(-0.26, yRow, 0.002);
+                this.group.add(mesh);
+                row.canvas = canvas; row.ctx = ctx; row.mesh = mesh;
+                row.texture = mesh.material.map;
 
-            row.plus = this._makeStepButton('+', def, +1);
-            row.plus.position.set(0.58, yRow, 0.004);
-            this.group.add(row.plus);
+                row.minus = this._makeStepButton('−', def, -1);
+                row.minus.position.set(0.36, yRow, 0.004);
+                this.group.add(row.minus);
+
+                row.plus = this._makeStepButton('+', def, +1);
+                row.plus.position.set(0.58, yRow, 0.004);
+                this.group.add(row.plus);
+            }
 
             this._rows.push(row);
         });
@@ -114,10 +134,11 @@ export class SettingsPanel3D {
         this.group.add(close);
     }
 
-    _makeStepButton(symbol, def, dir) {
-        const canvas = CanvasUI.createButtonTexture(symbol, { width: 180, height: 160, radius: 40, fontSize: 110 });
+    _makeStepButton(symbol, def, dir, planeW = 0.16) {
+        const fontSize = planeW < 0.15 ? 72 : 110;
+        const canvas = CanvasUI.createButtonTexture(symbol, { width: 180, height: 160, radius: 40, fontSize });
         const mesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.16, 0.142),
+            new THREE.PlaneGeometry(planeW, planeW * 160 / 180),
             new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, depthTest: false, side: THREE.DoubleSide })
         );
         mesh.renderOrder = 11002;
@@ -142,18 +163,19 @@ export class SettingsPanel3D {
         const cur = Number(SettingsStore.get(def.path));
         const next = clampToStep(def, cur + dir * def.step);
         this.applyFn(def.path, next);
-        const row = this._rows.find(r => r.def === def);
+        // find by path so fine-step copies (spread defs) also update the display
+        const row = this._rows.find(r => r.def.path === def.path);
         if (row) this._drawRow(row, next);
     }
 
     // ---- drawing ----
-    _makeLabelPlane() {
+    _makeLabelPlane(w = 0.92) {
         const canvas = document.createElement('canvas');
         canvas.width = 760; canvas.height = 120;
         const ctx = canvas.getContext('2d');
         const texture = new THREE.CanvasTexture(canvas);
         const mesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.92, 0.92 * 120 / 760),
+            new THREE.PlaneGeometry(w, w * 120 / 760),
             new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthTest: false, side: THREE.DoubleSide })
         );
         mesh.renderOrder = 11001;

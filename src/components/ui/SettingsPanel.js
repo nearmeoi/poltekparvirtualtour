@@ -136,7 +136,7 @@ export class SettingsPanel {
 
         const input = document.createElement('input');
         input.type = 'range';
-        input.min = def.min; input.max = def.max; input.step = def.step;
+        input.min = def.min; input.max = def.max; input.step = def.fineStep || def.step;
         input.addEventListener('input', () => {
             const v = Number(input.value);
             value.textContent = this._fmt(v, def);
