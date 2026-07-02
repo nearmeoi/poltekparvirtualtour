@@ -14,7 +14,7 @@ export const SETTINGS_SCHEMA = [
     { group: 'Reticle',            label: 'Reticle size',        path: 'gaze.reticleSize',      min: 0.002, max: 0.03, step: 0.001, modes: ['webxr', 'cardboard'] },
     { group: 'Reticle',            label: 'Reticle distance',    path: 'gaze.reticleDistance',  min: 0.5,   max: 5,    step: 0.1,   modes: ['webxr', 'cardboard'] },
     { group: 'Reticle',            label: 'Dwell time (sec)',    path: 'gaze.activationTime',   min: 0.5,   max: 4,    step: 0.1,   modes: ['webxr', 'cardboard'] },
-    { group: 'Stereo (double-vision)', label: 'Eye separation (mm)', path: 'vr.cardboardIPD',  min: 0.020, max: 0.200, step: 0.005, fineStep: 0.001, displayMult: 1000, modes: ['cardboard'] },
+    { group: 'Stereo (double-vision)', label: 'Eye separation (mm)', path: 'vr.cardboardIPD',  min: 0.020, max: 0.500, step: 0.005, fineStep: 0.001, displayMult: 1000, modes: ['cardboard'] },
     { group: 'Stereo (double-vision)', label: 'Lens distortion',     path: 'vr.lensDistortion', min: 0,    max: 0.8,  step: 0.01,                                    modes: ['cardboard'] },
     { group: 'Stereo (double-vision)', label: 'VR field of view',    path: 'fov.vr',           min: 20,    max: 130,  step: 5,                                        modes: ['cardboard'] },
     { group: 'Stereo (double-vision)', label: 'Panorama distance',   path: 'panorama.sphereRadius', min: 20, max: 90, step: 5,                   modes: ['webxr', 'cardboard'] },

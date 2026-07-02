@@ -58,37 +58,20 @@ export class StereoEffect {
             uniform sampler2D tDiffuse;
             uniform vec2 resolution;
             uniform float distortion;
-            uniform float exposure; // Added for brightness control
-            
+
             varying vec2 vUv;
 
             void main() {
-                vec2 uv = vUv;
-                
-                // Normalizing coordinates to [-1, 1] relative to center
                 vec2 center = vec2(0.5, 0.5);
-                vec2 p = (uv - center) * 2.0;
-                
-                // Barrel distortion math
+                vec2 p = (vUv - center) * 2.0;
                 float r2 = dot(p, p);
-                vec2 distortedP = p * (1.0 + distortion * r2);
-                
-                // Convert back to [0, 1] UV space
-                vec2 distortedUv = (distortedP / 2.0) + center;
-                
-                // Sampling with safety check
-                if (distortedUv.x < 0.0 || distortedUv.x > 1.0 || distortedUv.y < 0.0 || distortedUv.y > 1.0) {
+                vec2 distortedUv = (p * (1.0 + distortion * r2)) * 0.5 + center;
+
+                if (distortedUv.x < 0.0 || distortedUv.x > 1.0 ||
+                    distortedUv.y < 0.0 || distortedUv.y > 1.0) {
                     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
                 } else {
-                    vec4 color = texture2D(tDiffuse, distortedUv);
-                    
-                    // Apply exposure and gamma lift (HD High Fidelity)
-                    vec3 res = color.rgb * exposure;
-                    
-                    // Simple Gamma lift for shadows (1.0/1.2 approx)
-                    res = pow(res, vec3(0.8)); // 0.8 power lifts shadows
-                    
-                    gl_FragColor = vec4(res, color.a);
+                    gl_FragColor = texture2D(tDiffuse, distortedUv);
                 }
             }
         `;
@@ -98,7 +81,6 @@ export class StereoEffect {
                 tDiffuse: { value: null },
                 resolution: { value: new THREE.Vector2() },
                 distortion: { value: CONFIG.vr.lensDistortion },
-                exposure: { value: 2.5 } // Extreme boost (250% Brightness)
             },
 
             vertexShader,
