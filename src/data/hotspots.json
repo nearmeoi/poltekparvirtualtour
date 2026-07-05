@@ -670,5 +670,371 @@
       "type": "arrow",
       "label": "Masa Perjuangan"
     }
+  ],
+  "assets/Lagaligo/Media/awal.jpg": [
+    {
+      "yaw": -116.91,
+      "pitch": -6.09,
+      "target": "assets/Lagaligo/Media/depan pintu.jpg",
+      "target_name": "Depan Pintu",
+      "type": "arrow",
+      "label": "Depan Pintu",
+      "size": 3,
+      "textSize": 1,
+      "color": "#ef4444",
+      "icon_url": null,
+      "labelOffset": -1.5,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/depan pintu.jpg": [
+    {
+      "yaw": 60.5,
+      "pitch": -11.01,
+      "target": "assets/Lagaligo/Media/awal.jpg",
+      "target_name": "Titik Awal",
+      "type": "arrow",
+      "label": "Titik Awal",
+      "size": 2.5,
+      "textSize": 1,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -0.5,
+      "labelWrap": false
+    },
+    {
+      "yaw": 169.05,
+      "pitch": -9.5,
+      "target": "assets/Lagaligo/Media/didalam.jpg",
+      "target_name": "Masuk Museum",
+      "type": "arrow",
+      "label": "Masuk Museum",
+      "size": 2.5,
+      "textSize": 1.2,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -1,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/didalam.jpg": [
+    {
+      "yaw": 135.92,
+      "pitch": -8.48,
+      "target": "assets/Lagaligo/Media/tangga atau lantai 1.jpg",
+      "target_name": "Masuk Museum",
+      "type": "arrow",
+      "label": "Masuk Museum",
+      "size": 3,
+      "textSize": 1,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -1.5,
+      "labelWrap": false
+    },
+    {
+      "yaw": 41.74,
+      "pitch": -14.66,
+      "target": "assets/Lagaligo/Media/depan pintu.jpg",
+      "target_name": "Depan Pintu",
+      "type": "arrow",
+      "label": "Depan Pintu",
+      "size": 3,
+      "textSize": 1.2,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -0.5,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/tangga atau lantai 1.jpg": [
+    {
+      "yaw": 94.75,
+      "pitch": -20.65,
+      "target": "assets/Lagaligo/Media/IMG_20260407_123917_00_170.jpg",
+      "target_name": "Lantai 1",
+      "type": "arrow",
+      "label": "Lantai 1",
+      "size": 4,
+      "textSize": 1.9,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    },
+    {
+      "yaw": 177.88,
+      "pitch": -1.9,
+      "target": "",
+      "target_name": "Lantai 2",
+      "type": "arrow",
+      "label": "Lantai 2",
+      "size": 4.5,
+      "textSize": 1,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    },
+    {
+      "yaw": -86.79,
+      "pitch": -11.81,
+      "target": "assets/Lagaligo/Media/didalam.jpg",
+      "target_name": "Kembali",
+      "type": "arrow",
+      "label": "Kembali",
+      "size": 3.5,
+      "textSize": 1,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -0.5,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/IMG_20260407_123917_00_170.jpg": [
+    {
+      "yaw": 178.45,
+      "pitch": -13.93,
+      "target": "assets/Lagaligo/Media/tangga atau lantai 1.jpg",
+      "target_name": "Kembali",
+      "type": "arrow",
+      "label": "Kembali",
+      "size": 3.5,
+      "textSize": 1.8,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -2,
+      "labelWrap": false
+    },
+    {
+      "yaw": 2.4,
+      "pitch": -8.03,
+      "target": "assets/Lagaligo/Media/IMG_20260407_123800_00_168.jpg",
+      "target_name": "Lanjut",
+      "type": "arrow",
+      "label": "Lanjut",
+      "size": 4.5,
+      "textSize": 1.6,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -1.5,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/IMG_20260407_123800_00_168.jpg": [
+    {
+      "yaw": 78.96,
+      "pitch": -24.97,
+      "target": "assets/Lagaligo/Media/IMG_20260407_123917_00_170.jpg",
+      "target_name": "Kembali",
+      "type": "arrow",
+      "label": "Kembali",
+      "size": 5,
+      "textSize": 1.2,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 1,
+      "labelWrap": false
+    },
+    {
+      "yaw": -89.24,
+      "pitch": -22,
+      "target": "assets/Lagaligo/Media/IMG_20260407_123608_00_165.jpg",
+      "target_name": "lanjut",
+      "type": "arrow",
+      "label": "lanjut",
+      "size": 4.5,
+      "textSize": 1.4,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/IMG_20260407_123608_00_165.jpg": [
+    {
+      "yaw": -74.23,
+      "pitch": -27.72,
+      "target": "assets/Lagaligo/Media/IMG_20260407_123800_00_168.jpg",
+      "target_name": "Kembali",
+      "type": "arrow",
+      "label": "Kembali",
+      "size": 4,
+      "textSize": 1.4,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    },
+    {
+      "yaw": 94.71,
+      "pitch": -15.77,
+      "target": "assets/Lagaligo/Media/IMG_20260407_123401_00_162.jpg",
+      "target_name": "lanjut",
+      "type": "arrow",
+      "label": "lanjut",
+      "size": 3.5,
+      "textSize": 1.7,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/IMG_20260407_123401_00_162.jpg": [
+    {
+      "yaw": -85.5,
+      "pitch": -15.6,
+      "target": "assets/Lagaligo/Media/IMG_20260407_123608_00_165.jpg",
+      "target_name": "Kembali",
+      "type": "arrow",
+      "label": "Kembali",
+      "size": 3.5,
+      "textSize": 1.7,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -0.5,
+      "labelWrap": false
+    },
+    {
+      "yaw": 85.53,
+      "pitch": -19.06,
+      "target": "assets/Lagaligo/Media/IMG_20260407_122936_00_155.jpg",
+      "target_name": "lanjut",
+      "type": "arrow",
+      "label": "lanjut",
+      "size": 4,
+      "textSize": 1.7,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/IMG_20260407_122936_00_155.jpg": [
+    {
+      "yaw": -82.59,
+      "pitch": -14.76,
+      "target": "assets/Lagaligo/Media/IMG_20260407_123401_00_162.jpg",
+      "target_name": "Kembali",
+      "type": "arrow",
+      "label": "Kembali",
+      "size": 3,
+      "textSize": 1,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    },
+    {
+      "yaw": 96.72,
+      "pitch": -18.44,
+      "target": "assets/Lagaligo/Media/IMG_20260407_122907_00_154.jpg",
+      "target_name": "Lanjut",
+      "type": "arrow",
+      "label": "Lanjut",
+      "size": 3,
+      "textSize": 1,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/IMG_20260407_122907_00_154.jpg": [
+    {
+      "yaw": 71.92,
+      "pitch": -23.67,
+      "target": "assets/Lagaligo/Media/IMG_20260407_122936_00_155.jpg",
+      "target_name": "Kembali",
+      "type": "arrow",
+      "label": "Kembali",
+      "size": 4,
+      "textSize": 1,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    },
+    {
+      "yaw": -107.88,
+      "pitch": -17.99,
+      "target": "assets/Lagaligo/Media/IMG_20260407_122543_00_150.jpg",
+      "target_name": "Lanjut",
+      "type": "arrow",
+      "label": "Lanjut",
+      "size": 3,
+      "textSize": 1,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    },
+    {
+      "yaw": -51.25,
+      "pitch": -23.58,
+      "target": "assets/Lagaligo/Media/IMG_20260407_121937_00_144.jpg",
+      "target_name": "Ke lantai 2",
+      "type": "arrow",
+      "label": "Ke lantai 2",
+      "size": 4,
+      "textSize": 1,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/IMG_20260407_122543_00_150.jpg": [
+    {
+      "yaw": -85.63,
+      "pitch": -18.26,
+      "target": "assets/Lagaligo/Media/IMG_20260407_122117_00_146.jpg",
+      "target_name": "Kembali",
+      "type": "arrow",
+      "label": "Kembali",
+      "size": 3.5,
+      "textSize": 1.2,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": 0,
+      "labelWrap": false
+    }
+  ],
+  "assets/Lagaligo/Media/IMG_20260407_123847_00_169.jpg": [
+    {
+      "yaw": 179.97,
+      "pitch": -13.24,
+      "target": "",
+      "target_name": "Informasi",
+      "type": "info",
+      "label": "Informasi",
+      "size": 6,
+      "textSize": 1.3,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -2.5,
+      "labelWrap": false,
+      "title": "",
+      "description": "awdawbdhabwhdbawd",
+      "infoWidth": 1,
+      "infoHeight": 0.8,
+      "infoColor": "#1e293b",
+      "infoOpacity": 0.95
+    },
+    {
+      "yaw": 1.59,
+      "pitch": -6.34,
+      "target": "assets/Lagaligo/Media/tangga atau lantai 1.jpg",
+      "target_name": "Resepsionis",
+      "type": "arrow",
+      "label": "Resepsionis",
+      "size": 6,
+      "textSize": 1.6,
+      "color": null,
+      "icon_url": null,
+      "labelOffset": -3,
+      "labelWrap": false
+    }
   ]
 }
