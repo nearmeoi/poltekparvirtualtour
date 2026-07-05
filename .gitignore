@@ -9,3 +9,8 @@ dist/
 
 # Local source backups / full-res originals (not committed)
 _backup/
+
+# Large raw video files (original recordings, tidak di-commit)
+# File yang sudah dikompress (panlos_360.mp4 ~66MB) tetap di-commit
+public/assets/*/Video/*.mp4
+!public/assets/Panlos/Video/panlos_360.mp4

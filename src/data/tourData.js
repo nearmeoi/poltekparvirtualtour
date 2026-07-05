@@ -40,8 +40,8 @@ export const TOUR_DATA = [
     subtitle: 'Pintu Masuk',
     description: 'Ikon Pariwisata Kota Makassar',
     panorama: 'assets/Panlos/Media/IMG_20260407_173949_00_311.jpg',
-    // 360° video (dev only — served by videoFsPlugin from E:\VTD via /__vtd/)
-    video: '/__vtd/Panlos/Video/VID_20260408_173901_00_069.mp4',
+    // 360° video — compressed from 593MB → 66MB (2048x1024, 9Mbps H.264)
+    video: 'assets/Panlos/Video/panlos_360.mp4',
     // Logo placed at nadir to cover camera/tripod (set path string or null to skip)
     nadirLogo: null,
     thumbnail: 'assets/thumb_pantai_losari.webp',
