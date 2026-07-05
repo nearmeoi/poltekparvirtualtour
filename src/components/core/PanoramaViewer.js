@@ -1364,7 +1364,7 @@ export class PanoramaViewer {
 
         const video = document.createElement('video');
         video.src = videoUrl;
-        video.loop = true;
+        video.loop = false;
         video.muted = true;
         video.playsInline = true;
         video.crossOrigin = 'anonymous';
